@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101418">
+    <meta
+      name="description"
+      content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
+    >
+    <title>zane's performance</title>
+    <link rel="preconnect" href="https://docs.google.com">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero__content">
+          <p class="eyebrow">central-estudos</p>
+          <h1 id="page-title">zane's performance</h1>
+          <p class="hero__copy">
+            Um painel bonito para acompanhar provas antigas, enxergar evolucao e mirar nos 92% com clareza.
+          </p>
+          <div class="hero__actions">
+            <a class="button button--primary" href="https://docs.google.com/spreadsheets/d/1RSMEdlBCzONSl7tFpsywUGUzrFRjjh8oOYYBAWnCi4E/edit" target="_blank" rel="noreferrer">
+              Abrir planilha
+            </a>
+            <span class="status" id="data-status">Carregando planilha...</span>
+          </div>
+        </div>
+
+        <div class="goal-panel" aria-label="Meta principal">
+          <span class="goal-panel__label">Meta</span>
+          <strong>92%</strong>
+          <span>166 / 180</span>
+          <div class="goal-meter" aria-hidden="true">
+            <div class="goal-meter__fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary-grid" aria-label="Resumo">
+        <article class="metric-card">
+          <span>Melhor prova</span>
+          <strong id="best-exam">--</strong>
+          <small id="best-exam-detail">Aguardando dados</small>
+        </article>
+        <article class="metric-card">
+          <span>Media geral</span>
+          <strong id="average-score">--</strong>
+          <small>considerando provas com total</small>
+        </article>
+        <article class="metric-card">
+          <span>Distancia ate a meta</span>
+          <strong id="goal-gap">--</strong>
+          <small>meta de 166 acertos</small>
+        </article>
+        <article class="metric-card">
+          <span>Evolucao recente</span>
+          <strong id="recent-trend">--</strong>
+          <small>ultimas provas registradas</small>
+        </article>
+      </section>
+
+      <section class="dashboard">
+        <article class="chart-card chart-card--wide">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">provas antigas</p>
+              <h2>Evolucao por prova</h2>
+            </div>
+            <span class="pill">Meta 166</span>
+          </div>
+          <canvas id="progress-chart" height="260" aria-label="Grafico de evolucao por prova"></canvas>
+        </article>
+
+        <article class="chart-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">areas</p>
+              <h2>Mapa de acertos</h2>
+            </div>
+            <span class="pill">42 / area</span>
+          </div>
+          <canvas id="area-chart" height="260" aria-label="Grafico de acertos por area"></canvas>
+        </article>
+
+        <article class="target-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">rota</p>
+              <h2>Metas por bloco</h2>
+            </div>
+          </div>
+          <div class="target-list">
+            <div>
+              <span>Total</span>
+              <strong>166/180</strong>
+              <small>92% da prova inteira</small>
+            </div>
+            <div>
+              <span>Dia 1</span>
+              <strong>83/90</strong>
+              <small>Linguagens + Humanas</small>
+            </div>
+            <div>
+              <span>Dia 2</span>
+              <strong>83/90</strong>
+              <small>Matematica + Natureza</small>
+            </div>
+            <div>
+              <span>Area</span>
+              <strong>42/45</strong>
+              <small>referencia por caderno</small>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="table-section" aria-labelledby="table-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">historico</p>
+            <h2 id="table-title">Provas registradas</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Prova</th>
+                <th>Humanas</th>
+                <th>Linguagens</th>
+                <th>Matematica</th>
+                <th>Natureza</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="exam-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
