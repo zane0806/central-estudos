@@ -17,6 +17,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -47,6 +51,7 @@ body {
 .hero__content,
 .goal-panel,
 .metric-card,
+.entry-section,
 .chart-card,
 .target-card,
 .table-section {
@@ -129,6 +134,35 @@ h2 {
   color: #101418;
 }
 
+.button--primary-dark {
+  border: 0;
+  background: var(--surface-strong);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.button--secondary,
+.button--ghost {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.button--ghost {
+  background: transparent;
+}
+
+.button--danger {
+  border-color: rgba(223, 107, 87, 0.3);
+  color: #a13d2d;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .status {
   color: rgba(249, 251, 251, 0.78);
   font-size: 0.92rem;
@@ -189,6 +223,7 @@ h2 {
 }
 
 .metric-card,
+.entry-section,
 .chart-card,
 .target-card,
 .table-section {
@@ -230,10 +265,85 @@ h2 {
   margin-bottom: 16px;
 }
 
+.entry-section,
 .chart-card,
 .target-card,
 .table-section {
   padding: 20px;
+}
+
+.entry-section {
+  margin-bottom: 16px;
+}
+
+.entry-actions,
+.form-submit,
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.exam-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(4, minmax(110px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.exam-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.exam-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+}
+
+.exam-form input:focus {
+  border-color: var(--green);
+  outline: 3px solid rgba(31, 138, 112, 0.16);
+}
+
+.exam-form__wide {
+  grid-column: span 2;
+}
+
+.form-total {
+  display: grid;
+  gap: 6px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfc;
+}
+
+.form-total span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.form-total strong {
+  font-size: 1.15rem;
+}
+
+.form-submit {
+  align-items: end;
 }
 
 .chart-card--wide {
@@ -291,7 +401,7 @@ canvas {
 
 table {
   width: 100%;
-  min-width: 780px;
+  min-width: 900px;
   border-collapse: collapse;
 }
 
@@ -339,6 +449,13 @@ td {
   color: #a13d2d;
 }
 
+.table-action {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
 @media (max-width: 880px) {
   .hero,
   .dashboard,
@@ -357,6 +474,14 @@ td {
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .exam-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .exam-form__wide {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 560px) {
@@ -368,6 +493,7 @@ td {
   .hero__content,
   .goal-panel,
   .metric-card,
+  .entry-section,
   .chart-card,
   .target-card,
   .table-section {
@@ -390,5 +516,23 @@ td {
   .section-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .entry-actions,
+  .form-submit {
+    width: 100%;
+  }
+
+  .entry-actions .button,
+  .form-submit .button {
+    width: 100%;
+  }
+
+  .exam-form {
+    grid-template-columns: 1fr;
+  }
+
+  .exam-form__wide {
+    grid-column: span 1;
   }
 }

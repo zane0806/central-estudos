@@ -9,7 +9,6 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>zane's performance</title>
-    <link rel="preconnect" href="https://docs.google.com">
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
@@ -19,13 +18,13 @@
           <p class="eyebrow">central-estudos</p>
           <h1 id="page-title">zane's performance</h1>
           <p class="hero__copy">
-            Um painel bonito para acompanhar provas antigas, enxergar evolucao e mirar nos 92% com clareza.
+            Um painel bonito para lancar suas provas, acompanhar evolucao e mirar nos 92% com clareza.
           </p>
           <div class="hero__actions">
-            <a class="button button--primary" href="https://docs.google.com/spreadsheets/d/1RSMEdlBCzONSl7tFpsywUGUzrFRjjh8oOYYBAWnCi4E/edit" target="_blank" rel="noreferrer">
-              Abrir planilha
+            <a class="button button--primary" href="#entry-card">
+              Registrar prova
             </a>
-            <span class="status" id="data-status">Carregando planilha...</span>
+            <span class="status" id="data-status">Dados salvos neste navegador</span>
           </div>
         </div>
 
@@ -60,6 +59,57 @@
           <strong id="recent-trend">--</strong>
           <small>ultimas provas registradas</small>
         </article>
+      </section>
+
+      <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">lancar dados</p>
+            <h2 id="entry-title">Nova prova</h2>
+          </div>
+          <div class="entry-actions">
+            <button class="button button--secondary" type="button" id="export-data">Exportar</button>
+            <button class="button button--secondary" type="button" id="import-data">Importar</button>
+            <button class="button button--ghost" type="button" id="reset-data">Restaurar base</button>
+            <input id="import-file" type="file" accept="application/json" hidden>
+          </div>
+        </div>
+
+        <form class="exam-form" id="exam-form">
+          <input type="hidden" id="exam-id">
+          <label>
+            Prova
+            <input id="exam-name" name="prova" type="text" placeholder="Ex: ENEM 2025 PPL" required>
+          </label>
+          <label>
+            Humanas
+            <input id="score-humanas" name="humanas" type="number" inputmode="numeric" min="0" max="45" required>
+          </label>
+          <label>
+            Linguagens
+            <input id="score-linguagens" name="linguagens" type="number" inputmode="numeric" min="0" max="45" required>
+          </label>
+          <label>
+            Matematica
+            <input id="score-matematica" name="matematica" type="number" inputmode="numeric" min="0" max="45" required>
+          </label>
+          <label>
+            Natureza
+            <input id="score-natureza" name="natureza" type="number" inputmode="numeric" min="0" max="45" required>
+          </label>
+          <label class="exam-form__wide">
+            Observacoes
+            <input id="exam-notes" name="obs" type="text" placeholder="Opcional">
+          </label>
+          <div class="form-total" aria-live="polite">
+            <span>Total</span>
+            <strong id="form-total">0/180</strong>
+          </div>
+          <div class="form-submit">
+            <button class="button button--primary-dark" type="submit" id="save-exam">Salvar prova</button>
+            <button class="button button--secondary" type="button" id="cancel-edit" hidden>Cancelar edicao</button>
+          </div>
+        </form>
       </section>
 
       <section class="dashboard">
@@ -135,6 +185,7 @@
                 <th>Natureza</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th>Acoes</th>
               </tr>
             </thead>
             <tbody id="exam-table"></tbody>

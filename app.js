@@ -1,44 +1,20 @@
-const SHEET_ID = "1RSMEdlBCzONSl7tFpsywUGUzrFRjjh8oOYYBAWnCi4E";
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+const STORAGE_KEY = "central-estudos.exams.v2";
 const TARGET_TOTAL = 166;
-const TARGET_PERCENT = 0.92;
 
-const fallbackSummaryRows = [
-  ["Prova", "Humanas (G+F+H)", "Linguagens (L+I)", "Matematica (M)", "Natureza (F+Q+B)", "Coluna1", "OBS"],
-  ["ENEM 2019", 41, 34, 36, 34, 145, ""],
-  ["ENEM 2024 PPL", 38, 34, 38, 35, 145, ""],
-  ["ENEM 2023 PPL", 43, 39, 35, 37, 154, ""],
-  ["ENEM 2018", "", "", 39, 34, 149, ""],
-  ["ENEM 2022 PPL", "", "", 37, 36, 149, ""],
-  ["ENEM 2022", 38, 34, 37, 34, 143, ""],
-  ["ENEM 2021", 40, 36, 42, 36, 154, "feitas em 2026"],
-  ["ENEM 2024", 44, 40, 41, 42, 167, ""],
-  ["ENEM 2019 PPL", 42, 40, 42, 40, 164, ""],
-  ["ENEM 2020 PPL", "", "", 38, 43, "", ""],
-  ["ENEM 2021 PPL", "", "", 42, 42, "", ""],
-  ["ENEM S. Poli", 37, 39, 41, 38, 155, ""]
-];
-
-const fallbackDetailRows = [
-  ["Dia", "Prova", "G", "F", "H", "L", "I", "Total (T)", "ORDEM", "Observacoes"],
-  ["Dia 1", "ENEM 2019", 0, 2, 2, 2, 9, 75, 1, ""],
-  ["Dia 1", "ENEM 2021", 0, 1, 4, 9, 0, 76, 4, ""],
-  ["Dia 1", "ENEM 2022", 3, 2, 2, 11, "", 72, 5, ""],
-  ["Dia 1", "ENEM 2024", 0, 1, 0, 5, 0, 84, 6, ""],
-  ["Dia 1", "ENEM 2023 PPL", "", "", 2, 6, "", 82, 3, ""],
-  ["Dia 1", "ENEM 2024 PPL", "", "", 7, 11, "", 72, 2, ""],
-  ["Dia", "Prova", "M", "F", "Q", "B", "Total (T)", "ORDEM", "Observacoes"],
-  ["Dia 2", "ENEM 2018", 6, 5, 5, 1, 73, 4, ""],
-  ["Dia 2", "ENEM 2019", 9, 7, 3, 1, 70, 3, ""],
-  ["Dia 2", "ENEM 2021", 3, 2, 1, 6, 78, 7, ""],
-  ["Dia 2", "ENEM 2022* sr", 8, 4, 6, 1, 71, 6, ""],
-  ["Dia 2", "ENEM 2024", 4, 1, 1, 1, 83, 8, ""],
-  ["Dia 2", "ENEM 2019 PPL", 3, 1, 3, 1, 82, 9, ""],
-  ["Dia 2", "ENEM 2020 PPL", 6, 0, 2, 0, 82, 10, ""],
-  ["Dia 2", "ENEM 2022 PPL*", 8, 4, 4, 1, 73, 5, ""],
-  ["Dia 2", "ENEM 2023 PPL", 10, 4, 4, 0, 72, 2, ""],
-  ["Dia 2", "ENEM 2024 PPL", 7, 4, 4, 2, 73, 1, ""]
-];
+const seedExams = [
+  { prova: "ENEM 2019", humanas: 41, linguagens: 34, matematica: 36, natureza: 34, total: 145, obs: "" },
+  { prova: "ENEM 2024 PPL", humanas: 38, linguagens: 34, matematica: 38, natureza: 35, total: 145, obs: "" },
+  { prova: "ENEM 2023 PPL", humanas: 43, linguagens: 39, matematica: 35, natureza: 37, total: 154, obs: "" },
+  { prova: "ENEM 2018", humanas: null, linguagens: null, matematica: 39, natureza: 34, total: 149, obs: "" },
+  { prova: "ENEM 2022 PPL", humanas: null, linguagens: null, matematica: 37, natureza: 36, total: 149, obs: "" },
+  { prova: "ENEM 2022", humanas: 38, linguagens: 34, matematica: 37, natureza: 34, total: 143, obs: "" },
+  { prova: "ENEM 2021", humanas: 40, linguagens: 36, matematica: 42, natureza: 36, total: 154, obs: "feitas em 2026" },
+  { prova: "ENEM 2024", humanas: 44, linguagens: 40, matematica: 41, natureza: 42, total: 167, obs: "" },
+  { prova: "ENEM 2019 PPL", humanas: 42, linguagens: 40, matematica: 42, natureza: 40, total: 164, obs: "" },
+  { prova: "ENEM 2020 PPL", humanas: null, linguagens: null, matematica: 38, natureza: 43, total: 81, obs: "" },
+  { prova: "ENEM 2021 PPL", humanas: null, linguagens: null, matematica: 42, natureza: 42, total: 84, obs: "" },
+  { prova: "ENEM S. Poli", humanas: 37, linguagens: 39, matematica: 41, natureza: 38, total: 155, obs: "" }
+].map(withId);
 
 const el = {
   status: document.querySelector("#data-status"),
@@ -49,122 +25,90 @@ const el = {
   recentTrend: document.querySelector("#recent-trend"),
   progressChart: document.querySelector("#progress-chart"),
   areaChart: document.querySelector("#area-chart"),
-  table: document.querySelector("#exam-table")
+  table: document.querySelector("#exam-table"),
+  form: document.querySelector("#exam-form"),
+  formTitle: document.querySelector("#entry-title"),
+  id: document.querySelector("#exam-id"),
+  prova: document.querySelector("#exam-name"),
+  humanas: document.querySelector("#score-humanas"),
+  linguagens: document.querySelector("#score-linguagens"),
+  matematica: document.querySelector("#score-matematica"),
+  natureza: document.querySelector("#score-natureza"),
+  obs: document.querySelector("#exam-notes"),
+  formTotal: document.querySelector("#form-total"),
+  saveExam: document.querySelector("#save-exam"),
+  cancelEdit: document.querySelector("#cancel-edit"),
+  exportData: document.querySelector("#export-data"),
+  importData: document.querySelector("#import-data"),
+  importFile: document.querySelector("#import-file"),
+  resetData: document.querySelector("#reset-data")
 };
 
-function toNumber(value) {
+let exams = loadExams();
+
+function withId(exam) {
+  return {
+    id: exam.id || crypto.randomUUID(),
+    prova: String(exam.prova || "").trim(),
+    humanas: nullableScore(exam.humanas),
+    linguagens: nullableScore(exam.linguagens),
+    matematica: nullableScore(exam.matematica),
+    natureza: nullableScore(exam.natureza),
+    total: nullableScore(exam.total),
+    obs: String(exam.obs || "").trim()
+  };
+}
+
+function nullableScore(value) {
   if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(String(value).replace(",", ".").replace(/[^\d.-]/g, ""));
+  const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function normalizeName(name) {
-  return String(name || "")
-    .replace(/\*/g, "")
-    .replace(/\s+sr$/i, "")
-    .trim();
+function scoreFromInput(input) {
+  const value = nullableScore(input.value);
+  return value === null ? null : Math.max(0, Math.min(45, Math.round(value)));
 }
 
-function rowsFromGvizTable(table) {
-  return table.rows.map((row) => row.c.map((cell) => (cell ? cell.v : "")));
+function computeTotal(exam) {
+  const scores = [exam.humanas, exam.linguagens, exam.matematica, exam.natureza];
+  if (scores.every((score) => score !== null)) {
+    return scores.reduce((sum, score) => sum + score, 0);
+  }
+  return exam.total ?? null;
 }
 
-async function loadSheet(sheetName) {
-  return new Promise((resolve, reject) => {
-    const callbackName = `__zaneSheet${Date.now()}${Math.random().toString(36).slice(2)}`;
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("Tempo esgotado ao ler a planilha."));
-    }, 12000);
-    const script = document.createElement("script");
-    const params = new URLSearchParams({
-      tqx: `out:json;responseHandler:${callbackName}`,
-      sheet: sheetName,
-      cacheBust: String(Date.now())
-    });
-
-    function cleanup() {
-      window.clearTimeout(timeout);
-      delete window[callbackName];
-      script.remove();
-    }
-
-    window[callbackName] = (payload) => {
-      cleanup();
-      if (payload.status === "error") {
-        reject(new Error(payload.errors?.[0]?.detailed_message || "Nao foi possivel ler a planilha publica."));
-        return;
-      }
-      resolve(rowsFromGvizTable(payload.table));
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("Nao foi possivel conectar a planilha."));
-    };
-
-    script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?${params}`;
-    document.head.append(script);
-  });
+function loadExams() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (!Array.isArray(stored)) return seedExams;
+    return stored.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+  } catch {
+    return seedExams;
+  }
 }
 
-function cleanSummaryRows(rows) {
-  return rows
-    .filter((row) => row.some((cell) => cell !== ""))
-    .map((row) => (row[0] === "" || row[0] === null ? row.slice(1) : row).filter((_, index) => index < 7))
-    .filter((row) => row[0] && row[0] !== "Prova")
-    .map((row) => {
-      const humanas = toNumber(row[1]);
-      const linguagens = toNumber(row[2]);
-      const matematica = toNumber(row[3]);
-      const natureza = toNumber(row[4]);
-      const explicitTotal = toNumber(row[5]);
-      const computedTotal = [humanas, linguagens, matematica, natureza]
-        .filter((value) => value !== null)
-        .reduce((sum, value) => sum + value, 0);
-      const hasComputedTotal = [humanas, linguagens, matematica, natureza].some((value) => value !== null);
-
-      return {
-        prova: String(row[0]).trim(),
-        humanas,
-        linguagens,
-        matematica,
-        natureza,
-        total: explicitTotal ?? (hasComputedTotal ? computedTotal : null),
-        obs: row[6] || ""
-      };
-    })
-    .filter((exam) => exam.prova);
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(exams));
 }
 
-function cleanDetailRows(rows) {
-  return rows
-    .filter((row) => row.some((cell) => cell !== ""))
-    .map((row) => (row[0] === "" || row[0] === null ? row.slice(1) : row))
-    .filter((row) => String(row[0] || "").startsWith("Dia"))
-    .filter((row) => row[1] && row[1] !== "Prova")
-    .map((row) => ({
-      dia: row[0],
-      prova: normalizeName(row[1]),
-      total: toNumber(row[0] === "Dia 1" ? row[7] : row[6])
-    }))
-    .filter((row) => row.total !== null);
+function setStatus(message, isError = false) {
+  el.status.textContent = message;
+  el.status.classList.toggle("is-error", isError);
 }
 
-function mergeDetailTotals(exams, details) {
-  const byExam = new Map(exams.map((exam) => [normalizeName(exam.prova), exam]));
-  details.forEach((detail) => {
-    const exam = byExam.get(detail.prova);
-    if (!exam) return;
-    if (detail.dia === "Dia 1") exam.dia1 = detail.total;
-    if (detail.dia === "Dia 2") exam.dia2 = detail.total;
-  });
-  return exams;
-}
-
-function formatNumber(value, suffix = "") {
+function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "--";
-  return `${Math.round(value)}${suffix}`;
+  return `${Math.round(value)}`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function statusFor(total) {
@@ -173,35 +117,50 @@ function statusFor(total) {
   return { label: "subindo", className: "badge--low" };
 }
 
-function updateMetrics(exams) {
-  const withTotal = exams.filter((exam) => exam.total !== null);
+function updateMetrics() {
+  const withTotal = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
+
+  if (!withTotal.length) {
+    el.bestExam.textContent = "--";
+    el.bestExamDetail.textContent = "Aguardando dados";
+    el.averageScore.textContent = "--";
+    el.goalGap.textContent = "--";
+    el.recentTrend.textContent = "--";
+    return;
+  }
+
   const best = withTotal.reduce((winner, exam) => (exam.total > winner.total ? exam : winner), withTotal[0]);
   const average = withTotal.reduce((sum, exam) => sum + exam.total, 0) / withTotal.length;
   const latest = withTotal.at(-1);
   const previous = withTotal.at(-2);
-  const gap = latest ? TARGET_TOTAL - latest.total : null;
+  const gap = TARGET_TOTAL - latest.total;
   const trend = latest && previous ? latest.total - previous.total : null;
 
-  el.bestExam.textContent = best ? best.prova : "--";
-  el.bestExamDetail.textContent = best ? `${best.total}/180 (${Math.round((best.total / 180) * 100)}%)` : "Aguardando dados";
+  el.bestExam.textContent = best.prova;
+  el.bestExamDetail.textContent = `${best.total}/180 (${Math.round((best.total / 180) * 100)}%)`;
   el.averageScore.textContent = formatNumber(average);
-  el.goalGap.textContent = gap === null ? "--" : gap <= 0 ? `+${Math.abs(gap)}` : `${gap}`;
+  el.goalGap.textContent = gap <= 0 ? `+${Math.abs(gap)}` : `${gap}`;
   el.recentTrend.textContent = trend === null ? "--" : trend >= 0 ? `+${trend}` : String(trend);
 }
 
-function drawProgressChart(canvas, exams) {
+function drawProgressChart(canvas) {
   const ctx = prepareCanvas(canvas);
-  const data = exams.filter((exam) => exam.total !== null);
-  const padding = { top: 22, right: 22, bottom: 56, left: 46 };
+  const data = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
+  const padding = { top: 22, right: 22, bottom: 56, left: 46 };
   const plotW = width - padding.left - padding.right;
   const plotH = height - padding.top - padding.bottom;
   const max = 180;
-  const min = Math.max(0, Math.min(...data.map((exam) => exam.total), TARGET_TOTAL) - 12);
+  const min = data.length ? Math.max(0, Math.min(...data.map((exam) => exam.total), TARGET_TOTAL) - 12) : 0;
 
   ctx.clearRect(0, 0, width, height);
   drawGrid(ctx, padding, width, height, [min, TARGET_TOTAL, max], min, max);
+
+  if (!data.length) {
+    drawEmptyChart(ctx, width, height, "Sem provas cadastradas");
+    return;
+  }
 
   const points = data.map((exam, index) => ({
     exam,
@@ -252,7 +211,7 @@ function drawProgressChart(canvas, exams) {
   });
 }
 
-function drawAreaChart(canvas, exams) {
+function drawAreaChart(canvas) {
   const ctx = prepareCanvas(canvas);
   const keys = [
     ["humanas", "Humanas", "#1f8a70"],
@@ -262,8 +221,8 @@ function drawAreaChart(canvas, exams) {
   ];
   const values = keys.map(([key, label, color]) => {
     const available = exams.map((exam) => exam[key]).filter((value) => value !== null);
-    const average = available.reduce((sum, value) => sum + value, 0) / available.length;
-    return { label, color, value: average || 0 };
+    const average = available.length ? available.reduce((sum, value) => sum + value, 0) / available.length : 0;
+    return { label, color, value: average };
   });
 
   const width = canvas.clientWidth;
@@ -283,7 +242,7 @@ function drawAreaChart(canvas, exams) {
     const y = padding.top + plotH - h;
 
     ctx.fillStyle = item.color;
-    roundedRect(ctx, x, y, barW, h, 6);
+    roundedRect(ctx, x, y, barW, Math.max(h, 2), 6);
     ctx.fill();
 
     ctx.fillStyle = "#172026";
@@ -320,13 +279,20 @@ function drawGrid(ctx, padding, width, height, ticks, min, max) {
   ctx.textAlign = "right";
 
   ticks.forEach((tick) => {
-    const y = padding.top + plotH - ((tick - min) / (max - min)) * plotH;
+    const y = padding.top + plotH - ((tick - min) / (max - min || 1)) * plotH;
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
     ctx.fillText(tick, padding.left - 8, y + 3);
   });
+}
+
+function drawEmptyChart(ctx, width, height, label) {
+  ctx.fillStyle = "#63707a";
+  ctx.font = "800 14px system-ui";
+  ctx.textAlign = "center";
+  ctx.fillText(label, width / 2, height / 2);
 }
 
 function roundedRect(ctx, x, y, width, height, radius) {
@@ -343,55 +309,183 @@ function roundedRect(ctx, x, y, width, height, radius) {
   ctx.quadraticCurveTo(x, y, x + r, y);
 }
 
-function renderTable(exams) {
+function renderTable() {
   el.table.innerHTML = exams
+    .map((exam) => ({ ...exam, total: computeTotal(exam) }))
     .filter((exam) => exam.total !== null)
     .map((exam) => {
       const status = statusFor(exam.total);
       return `
         <tr>
-          <td>${exam.prova}</td>
+          <td>${escapeHtml(exam.prova)}</td>
           <td>${formatNumber(exam.humanas)}</td>
           <td>${formatNumber(exam.linguagens)}</td>
           <td>${formatNumber(exam.matematica)}</td>
           <td>${formatNumber(exam.natureza)}</td>
           <td>${exam.total}/180</td>
           <td><span class="badge ${status.className}">${status.label}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="button button--secondary table-action" type="button" data-action="edit" data-id="${exam.id}">Editar</button>
+              <button class="button button--secondary button--danger table-action" type="button" data-action="delete" data-id="${exam.id}">Excluir</button>
+            </div>
+          </td>
         </tr>
       `;
     })
     .join("");
 }
 
-function render(exams) {
-  updateMetrics(exams);
-  drawProgressChart(el.progressChart, exams);
-  drawAreaChart(el.areaChart, exams);
-  renderTable(exams);
+function updateFormTotal() {
+  const draft = readForm();
+  const total = computeTotal(draft) ?? 0;
+  el.formTotal.textContent = `${total}/180`;
+}
 
-  window.onresize = () => {
-    drawProgressChart(el.progressChart, exams);
-    drawAreaChart(el.areaChart, exams);
+function readForm() {
+  return {
+    id: el.id.value || crypto.randomUUID(),
+    prova: el.prova.value.trim(),
+    humanas: scoreFromInput(el.humanas),
+    linguagens: scoreFromInput(el.linguagens),
+    matematica: scoreFromInput(el.matematica),
+    natureza: scoreFromInput(el.natureza),
+    obs: el.obs.value.trim()
   };
 }
 
-async function boot() {
-  try {
-    const [summaryRows, detailRows] = await Promise.all([loadSheet("Página1"), loadSheet("Página2")]);
-    const exams = mergeDetailTotals(cleanSummaryRows(summaryRows), cleanDetailRows(detailRows));
-    render(exams);
-    el.status.textContent = "Planilha viva conectada";
-  } catch (error) {
-    const exams = mergeDetailTotals(cleanSummaryRows(fallbackSummaryRows), cleanDetailRows(fallbackDetailRows));
-    render(exams);
-    el.status.textContent = "Usando snapshot: publique a planilha na web para atualizar ao vivo";
-    el.status.classList.add("is-error");
-    console.warn(error);
+function resetForm() {
+  el.form.reset();
+  el.id.value = "";
+  el.formTitle.textContent = "Nova prova";
+  el.saveExam.textContent = "Salvar prova";
+  el.cancelEdit.hidden = true;
+  updateFormTotal();
+}
+
+function fillForm(exam) {
+  el.id.value = exam.id;
+  el.prova.value = exam.prova;
+  el.humanas.value = exam.humanas ?? "";
+  el.linguagens.value = exam.linguagens ?? "";
+  el.matematica.value = exam.matematica ?? "";
+  el.natureza.value = exam.natureza ?? "";
+  el.obs.value = exam.obs ?? "";
+  el.formTitle.textContent = "Editar prova";
+  el.saveExam.textContent = "Salvar alteracoes";
+  el.cancelEdit.hidden = false;
+  updateFormTotal();
+  document.querySelector("#entry-card").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function saveForm(event) {
+  event.preventDefault();
+  const draft = readForm();
+  const total = computeTotal(draft);
+
+  if (!draft.prova || total === null) {
+    setStatus("Preencha nome e notas da prova.", true);
+    return;
+  }
+
+  const saved = { ...draft, total };
+  const currentIndex = exams.findIndex((exam) => exam.id === saved.id);
+  if (currentIndex >= 0) exams[currentIndex] = saved;
+  else exams.push(saved);
+
+  persist();
+  render();
+  resetForm();
+  setStatus("Prova salva neste navegador");
+}
+
+function handleTableClick(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const exam = exams.find((item) => item.id === button.dataset.id);
+  if (!exam) return;
+
+  if (button.dataset.action === "edit") {
+    fillForm(exam);
+    return;
+  }
+
+  if (button.dataset.action === "delete") {
+    if (!window.confirm(`Excluir "${exam.prova}"?`)) return;
+    exams = exams.filter((item) => item.id !== exam.id);
+    persist();
+    render();
+    setStatus("Prova excluida deste navegador");
   }
 }
 
-document.querySelectorAll("a[href='#']").forEach((link) => {
-  link.href = SHEET_URL;
+function exportData() {
+  const blob = new Blob([JSON.stringify(exams, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "central-estudos-backup.json";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setStatus("Backup exportado");
+}
+
+function importData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(String(reader.result || "[]"));
+      if (!Array.isArray(imported)) throw new Error("Formato invalido");
+      exams = imported.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+      persist();
+      render();
+      resetForm();
+      setStatus("Backup importado");
+    } catch {
+      setStatus("Arquivo de backup invalido", true);
+    } finally {
+      el.importFile.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetData() {
+  if (!window.confirm("Restaurar a base inicial e substituir os dados salvos neste navegador?")) return;
+  exams = seedExams.map((exam) => ({ ...exam, id: crypto.randomUUID() }));
+  persist();
+  render();
+  resetForm();
+  setStatus("Base inicial restaurada");
+}
+
+function render() {
+  updateMetrics();
+  drawProgressChart(el.progressChart);
+  drawAreaChart(el.areaChart);
+  renderTable();
+
+  window.onresize = () => {
+    drawProgressChart(el.progressChart);
+    drawAreaChart(el.areaChart);
+  };
+}
+
+el.form.addEventListener("submit", saveForm);
+el.cancelEdit.addEventListener("click", resetForm);
+el.table.addEventListener("click", handleTableClick);
+el.exportData.addEventListener("click", exportData);
+el.importData.addEventListener("click", () => el.importFile.click());
+el.importFile.addEventListener("change", () => importData(el.importFile.files?.[0]));
+el.resetData.addEventListener("click", resetData);
+
+[el.humanas, el.linguagens, el.matematica, el.natureza].forEach((input) => {
+  input.addEventListener("input", updateFormTotal);
 });
 
-boot();
+render();
+updateFormTotal();
