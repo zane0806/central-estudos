@@ -11,17 +11,13 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>zanl's</title>
-    <link rel="stylesheet" href="./styles-20260704-3.css">
+    <link rel="stylesheet" href="./styles.css?v=20260704-4">
   </head>
   <body>
     <main class="shell">
       <section class="hero" aria-labelledby="page-title">
         <div class="hero__content">
-          <p class="eyebrow">central-estudos</p>
           <h1 id="page-title">zanl's</h1>
-          <p class="hero__copy">
-            Um painel bonito para lancar suas provas, acompanhar evolucao e mirar nos 92% com clareza.
-          </p>
           <div class="hero__actions">
             <a class="button button--primary" href="#entry-card">
               Registrar prova
@@ -38,6 +34,14 @@
             <div class="goal-meter__fill"></div>
           </div>
         </div>
+      </section>
+
+      <section class="board-switcher" aria-label="Escolher vestibular">
+        <button class="board-tab is-active" type="button" data-board="enem">ENEM</button>
+        <button class="board-tab" type="button" data-board="unesp">UNESP</button>
+        <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
+        <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
+        <button class="board-tab" type="button" data-board="unifesp">UNIFESP</button>
       </section>
 
       <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
@@ -173,6 +177,6 @@
       </section>
     </main>
 
-    <script src="./app-20260704-3.js"></script>
+    <script src="./app.js?v=20260704-4"></script>
   </body>
 </html>

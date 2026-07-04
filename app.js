@@ -1,4 +1,6 @@
-const STORAGE_KEY = "central-estudos.exams.v2";
+const LEGACY_STORAGE_KEY = "central-estudos.exams.v2";
+const STORAGE_PREFIX = "central-estudos.board.v1";
+const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const TARGET_TOTAL = 166;
 
 document.querySelector(".summary-grid")?.remove();
@@ -16,15 +18,18 @@ const seedExams = [
   { prova: "ENEM 2020 PPL", humanas: null, linguagens: null, matematica: 38, natureza: 43, total: 81, obs: "" },
   { prova: "ENEM 2021 PPL", humanas: null, linguagens: null, matematica: 42, natureza: 42, total: 84, obs: "" },
   { prova: "ENEM S. Poli", humanas: 37, linguagens: 39, matematica: 41, natureza: 38, total: 155, obs: "" }
-].map(withId);
+];
+
+const boards = [
+  { id: "enem", label: "ENEM", seed: seedExams, placeholder: "Ex: ENEM 2025 PPL" },
+  { id: "unesp", label: "UNESP", seed: [], placeholder: "Ex: UNESP 2025" },
+  { id: "famema", label: "FAMEMA", seed: [], placeholder: "Ex: FAMEMA 2025" },
+  { id: "famerp", label: "FAMERP", seed: [], placeholder: "Ex: FAMERP 2025" },
+  { id: "unifesp", label: "UNIFESP", seed: [], placeholder: "Ex: UNIFESP 2025" }
+];
 
 const el = {
   status: document.querySelector("#data-status"),
-  bestExam: document.querySelector("#best-exam"),
-  bestExamDetail: document.querySelector("#best-exam-detail"),
-  averageScore: document.querySelector("#average-score"),
-  goalGap: document.querySelector("#goal-gap"),
-  recentTrend: document.querySelector("#recent-trend"),
   progressChart: document.querySelector("#progress-chart"),
   examCarousel: document.querySelector("#exam-carousel"),
   table: document.querySelector("#exam-table"),
@@ -43,12 +48,22 @@ const el = {
   exportData: document.querySelector("#export-data"),
   importData: document.querySelector("#import-data"),
   importFile: document.querySelector("#import-file"),
-  resetData: document.querySelector("#reset-data")
+  resetData: document.querySelector("#reset-data"),
+  boardTabs: [...document.querySelectorAll("[data-board]")]
 };
 
-let exams = loadExams();
+let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
+let exams = loadExams(activeBoard);
 let chartFrame = 0;
 const chartWidths = new WeakMap();
+
+function boardById(id) {
+  return boards.find((board) => board.id === id);
+}
+
+function storageKey(board) {
+  return `${STORAGE_PREFIX}.${board.id}`;
+}
 
 function withId(exam) {
   return {
@@ -61,6 +76,10 @@ function withId(exam) {
     total: nullableScore(exam.total),
     obs: String(exam.obs || "").trim()
   };
+}
+
+function cloneSeed(board) {
+  return board.seed.map((exam) => withId({ ...exam, id: crypto.randomUUID() }));
 }
 
 function nullableScore(value) {
@@ -82,23 +101,48 @@ function computeTotal(exam) {
   return exam.total ?? null;
 }
 
-function loadExams() {
+function normalizeExams(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+}
+
+function readStoredArray(key) {
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (!Array.isArray(stored)) return seedExams;
-    return stored.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+    const stored = JSON.parse(localStorage.getItem(key) || "null");
+    return Array.isArray(stored) ? stored : null;
   } catch {
-    return seedExams;
+    return null;
   }
 }
 
+function loadExams(board) {
+  const stored = readStoredArray(storageKey(board));
+  if (stored) return normalizeExams(stored);
+
+  if (board.id === "enem") {
+    const legacy = readStoredArray(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const migrated = normalizeExams(legacy);
+      localStorage.setItem(storageKey(board), JSON.stringify(migrated));
+      return migrated;
+    }
+  }
+
+  return cloneSeed(board);
+}
+
 function persist() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(exams));
+  localStorage.setItem(storageKey(activeBoard), JSON.stringify(exams));
+  localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
 }
 
 function setStatus(message, isError = false) {
   el.status.textContent = message;
   el.status.classList.toggle("is-error", isError);
+}
+
+function updateStatusForBoard() {
+  setStatus(`${activeBoard.label}: dados salvos neste navegador`);
 }
 
 function formatNumber(value) {
@@ -121,34 +165,6 @@ function statusFor(total) {
   return { label: "subindo", className: "badge--low" };
 }
 
-function updateMetrics() {
-  if (!el.bestExam) return;
-
-  const withTotal = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
-
-  if (!withTotal.length) {
-    el.bestExam.textContent = "--";
-    el.bestExamDetail.textContent = "Aguardando dados";
-    el.averageScore.textContent = "--";
-    el.goalGap.textContent = "--";
-    el.recentTrend.textContent = "--";
-    return;
-  }
-
-  const best = withTotal.reduce((winner, exam) => (exam.total > winner.total ? exam : winner), withTotal[0]);
-  const average = withTotal.reduce((sum, exam) => sum + exam.total, 0) / withTotal.length;
-  const latest = withTotal.at(-1);
-  const previous = withTotal.at(-2);
-  const gap = TARGET_TOTAL - latest.total;
-  const trend = latest && previous ? latest.total - previous.total : null;
-
-  el.bestExam.textContent = best.prova;
-  el.bestExamDetail.textContent = `${best.total}/180 (${Math.round((best.total / 180) * 100)}%)`;
-  el.averageScore.textContent = formatNumber(average);
-  el.goalGap.textContent = gap <= 0 ? `+${Math.abs(gap)}` : `${gap}`;
-  el.recentTrend.textContent = trend === null ? "--" : trend >= 0 ? `+${trend}` : String(trend);
-}
-
 function drawProgressChart(canvas) {
   const ctx = prepareCanvas(canvas);
   const data = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
@@ -164,7 +180,7 @@ function drawProgressChart(canvas) {
   drawGrid(ctx, padding, width, height, [min, TARGET_TOTAL, max], min, max);
 
   if (!data.length) {
-    drawEmptyChart(ctx, width, height, "Sem provas cadastradas");
+    drawEmptyChart(ctx, width, height, `Sem provas de ${activeBoard.label}`);
     return;
   }
 
@@ -259,24 +275,21 @@ function drawEmptyChart(ctx, width, height, label) {
   ctx.fillText(label, width / 2, height / 2);
 }
 
-function roundedRect(ctx, x, y, width, height, radius) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + width - r, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height - r);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  ctx.lineTo(x + r, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-}
-
 function renderTable() {
-  el.table.innerHTML = exams
+  const rows = exams
     .map((exam) => ({ ...exam, total: computeTotal(exam) }))
-    .filter((exam) => exam.total !== null)
+    .filter((exam) => exam.total !== null);
+
+  if (!rows.length) {
+    el.table.innerHTML = `
+      <tr>
+        <td class="empty-table" colspan="8">Sem provas cadastradas em ${activeBoard.label}</td>
+      </tr>
+    `;
+    return;
+  }
+
+  el.table.innerHTML = rows
     .map((exam) => {
       const status = statusFor(exam.total);
       return `
@@ -310,7 +323,7 @@ function renderExamCarousel() {
   const visibleExams = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
 
   if (!visibleExams.length) {
-    el.examCarousel.innerHTML = `<div class="exam-empty">Sem provas cadastradas</div>`;
+    el.examCarousel.innerHTML = `<div class="exam-empty">Sem provas cadastradas em ${activeBoard.label}</div>`;
     return;
   }
 
@@ -353,6 +366,19 @@ function renderExamCarousel() {
     .join("");
 }
 
+function updateBoardTabs() {
+  el.boardTabs.forEach((tab) => {
+    const isActive = tab.dataset.board === activeBoard.id;
+    tab.classList.toggle("is-active", isActive);
+    tab.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function updateFormForBoard() {
+  el.prova.placeholder = activeBoard.placeholder;
+  if (!el.id.value) el.formTitle.textContent = "Nova prova";
+}
+
 function updateFormTotal() {
   const draft = readForm();
   const total = computeTotal(draft) ?? 0;
@@ -377,6 +403,7 @@ function resetForm() {
   el.formTitle.textContent = "Nova prova";
   el.saveExam.textContent = "Salvar prova";
   el.cancelEdit.hidden = true;
+  updateFormForBoard();
   updateFormTotal();
 }
 
@@ -413,7 +440,7 @@ function saveForm(event) {
   persist();
   render();
   resetForm();
-  setStatus("Prova salva neste navegador");
+  setStatus(`${activeBoard.label}: prova salva neste navegador`);
 }
 
 function handleTableClick(event) {
@@ -433,7 +460,7 @@ function handleTableClick(event) {
     exams = exams.filter((item) => item.id !== exam.id);
     persist();
     render();
-    setStatus("Prova excluida deste navegador");
+    setStatus(`${activeBoard.label}: prova excluida deste navegador`);
   }
 }
 
@@ -442,12 +469,12 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "central-estudos-backup.json";
+  link.download = `${activeBoard.id}-backup.json`;
   document.body.append(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  setStatus("Backup exportado");
+  setStatus(`${activeBoard.label}: backup exportado`);
 }
 
 function importData(file) {
@@ -457,11 +484,11 @@ function importData(file) {
     try {
       const imported = JSON.parse(String(reader.result || "[]"));
       if (!Array.isArray(imported)) throw new Error("Formato invalido");
-      exams = imported.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+      exams = normalizeExams(imported);
       persist();
       render();
       resetForm();
-      setStatus("Backup importado");
+      setStatus(`${activeBoard.label}: backup importado`);
     } catch {
       setStatus("Arquivo de backup invalido", true);
     } finally {
@@ -472,16 +499,31 @@ function importData(file) {
 }
 
 function resetData() {
-  if (!window.confirm("Restaurar a base inicial e substituir os dados salvos neste navegador?")) return;
-  exams = seedExams.map((exam) => ({ ...exam, id: crypto.randomUUID() }));
+  const message = activeBoard.seed.length
+    ? `Restaurar a base inicial de ${activeBoard.label} e substituir os dados salvos neste navegador?`
+    : `Limpar as provas de ${activeBoard.label} salvas neste navegador?`;
+  if (!window.confirm(message)) return;
+  exams = cloneSeed(activeBoard);
   persist();
   render();
   resetForm();
-  setStatus("Base inicial restaurada");
+  setStatus(activeBoard.seed.length ? `${activeBoard.label}: base inicial restaurada` : `${activeBoard.label}: tela limpa`);
+}
+
+function switchBoard(boardId) {
+  const nextBoard = boardById(boardId);
+  if (!nextBoard || nextBoard.id === activeBoard.id) return;
+  activeBoard = nextBoard;
+  exams = loadExams(activeBoard);
+  localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
+  resetForm();
+  render();
+  updateStatusForBoard();
 }
 
 function render() {
-  updateMetrics();
+  updateBoardTabs();
+  updateFormForBoard();
   drawCharts(true);
   renderExamCarousel();
   renderTable();
@@ -517,6 +559,10 @@ el.importData.addEventListener("click", () => el.importFile.click());
 el.importFile.addEventListener("change", () => importData(el.importFile.files?.[0]));
 el.resetData.addEventListener("click", resetData);
 
+el.boardTabs.forEach((tab) => {
+  tab.addEventListener("click", () => switchBoard(tab.dataset.board));
+});
+
 [el.humanas, el.linguagens, el.matematica, el.natureza].forEach((input) => {
   input.addEventListener("input", updateFormTotal);
 });
@@ -525,3 +571,4 @@ window.addEventListener("resize", scheduleChartResize, { passive: true });
 
 render();
 updateFormTotal();
+updateStatusForBoard();

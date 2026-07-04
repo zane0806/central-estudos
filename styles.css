@@ -126,6 +126,39 @@ h2 {
   line-height: 1.6;
 }
 
+.board-switcher {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.board-tab {
+  flex: 0 0 auto;
+  min-height: 42px;
+  border: 1px solid rgba(16, 20, 24, 0.12);
+  border-radius: 8px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  touch-action: manipulation;
+}
+
+.board-tab.is-active {
+  border-color: var(--surface-strong);
+  background: var(--surface-strong);
+  color: #ffffff;
+}
+
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
@@ -542,6 +575,12 @@ th {
 
 td {
   font-weight: 650;
+}
+
+.empty-table {
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
 }
 
 .badge {
