@@ -28,10 +28,10 @@
 
         <div class="goal-panel" aria-label="Meta principal">
           <span class="goal-panel__label">Meta</span>
-          <strong>92%</strong>
-          <span>166 / 180</span>
+          <strong id="goal-percent">92%</strong>
+          <span id="goal-total">166 / 180</span>
           <div class="goal-meter" aria-hidden="true">
-            <div class="goal-meter__fill"></div>
+            <div class="goal-meter__fill" id="goal-meter-fill"></div>
           </div>
         </div>
       </section>
@@ -65,19 +65,19 @@
             <input id="exam-name" name="prova" type="text" placeholder="Ex: ENEM 2025 PPL" required>
           </label>
           <label>
-            Humanas
+            <span id="label-humanas">Humanas</span>
             <input id="score-humanas" name="humanas" type="number" inputmode="numeric" min="0" max="45" required>
           </label>
           <label>
-            Linguagens
+            <span id="label-linguagens">Linguagens</span>
             <input id="score-linguagens" name="linguagens" type="number" inputmode="numeric" min="0" max="45" required>
           </label>
           <label>
-            Matematica
+            <span id="label-matematica">Matematica</span>
             <input id="score-matematica" name="matematica" type="number" inputmode="numeric" min="0" max="45" required>
           </label>
           <label>
-            Natureza
+            <span id="label-natureza">Natureza</span>
             <input id="score-natureza" name="natureza" type="number" inputmode="numeric" min="0" max="45" required>
           </label>
           <label class="exam-form__wide">
@@ -102,7 +102,7 @@
               <p class="eyebrow">provas antigas</p>
               <h2>Evolucao por prova</h2>
             </div>
-            <span class="pill">Meta 166</span>
+            <span class="pill" id="chart-goal-pill">Meta 166</span>
           </div>
           <canvas id="progress-chart" height="260" aria-label="Grafico de evolucao por prova"></canvas>
         </article>
@@ -125,28 +125,7 @@
               <h2>Metas por bloco</h2>
             </div>
           </div>
-          <div class="target-list">
-            <div>
-              <span>Total</span>
-              <strong>166/180</strong>
-              <small>92% da prova inteira</small>
-            </div>
-            <div>
-              <span>Dia 1</span>
-              <strong>83/90</strong>
-              <small>Linguagens + Humanas</small>
-            </div>
-            <div>
-              <span>Dia 2</span>
-              <strong>83/90</strong>
-              <small>Matematica + Natureza</small>
-            </div>
-            <div>
-              <span>Area</span>
-              <strong>42/45</strong>
-              <small>referencia por caderno</small>
-            </div>
-          </div>
+          <div class="target-list" id="target-list"></div>
         </article>
       </section>
 

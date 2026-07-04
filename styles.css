@@ -500,7 +500,7 @@ canvas {
 
 .area-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 34px;
+  grid-template-columns: 112px minmax(0, 1fr) 52px;
   gap: 10px;
   align-items: center;
 }
@@ -705,6 +705,6 @@ td {
   }
 
   .area-row {
-    grid-template-columns: 76px minmax(0, 1fr) 30px;
+    grid-template-columns: 92px minmax(0, 1fr) 48px;
   }
 }

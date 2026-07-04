@@ -1,7 +1,7 @@
 const LEGACY_STORAGE_KEY = "central-estudos.exams.v2";
 const STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
-const TARGET_TOTAL = 166;
+const TARGET_RATE = 0.92;
 
 document.querySelector(".summary-grid")?.remove();
 
@@ -21,18 +21,86 @@ const seedExams = [
 ];
 
 const boards = [
-  { id: "enem", label: "ENEM", seed: seedExams, placeholder: "Ex: ENEM 2025 PPL" },
-  { id: "unesp", label: "UNESP", seed: [], placeholder: "Ex: UNESP 2025" },
-  { id: "famema", label: "FAMEMA", seed: [], placeholder: "Ex: FAMEMA 2025" },
-  { id: "famerp", label: "FAMERP", seed: [], placeholder: "Ex: FAMERP 2025" },
-  { id: "unifesp", label: "UNIFESP", seed: [], placeholder: "Ex: UNIFESP 2025" }
+  {
+    id: "enem",
+    label: "ENEM",
+    totalMax: 180,
+    seed: seedExams,
+    placeholder: "Ex: ENEM 2025 PPL",
+    note: "prova inteira",
+    sections: [
+      { key: "humanas", label: "Humanas", max: 45, color: "#1f8a70" },
+      { key: "linguagens", label: "Linguagens", max: 45, color: "#3772ff" },
+      { key: "matematica", label: "Matematica", max: 45, color: "#df6b57" },
+      { key: "natureza", label: "Natureza", max: 45, color: "#d09b2c" }
+    ]
+  },
+  {
+    id: "unesp",
+    label: "UNESP",
+    totalMax: 90,
+    seed: [],
+    placeholder: "Ex: UNESP 2025 - 1a fase",
+    note: "1a fase: Conhecimentos Gerais",
+    sections: [
+      { key: "humanas", label: "Humanas", max: 30, color: "#1f8a70" },
+      { key: "linguagens", label: "Linguagens", max: 30, color: "#3772ff" },
+      { key: "matematica", label: "Nat. + Mat.", max: 30, color: "#df6b57" }
+    ]
+  },
+  {
+    id: "famema",
+    label: "FAMEMA",
+    totalMax: 48,
+    seed: [],
+    placeholder: "Ex: FAMEMA 2026",
+    note: "fase unica sem redacao: 8 discursivas + 40 objetivas",
+    sections: [
+      { key: "humanas", label: "Humanas", max: 10, color: "#1f8a70" },
+      { key: "linguagens", label: "Linguagens", max: 15, color: "#3772ff" },
+      { key: "matematica", label: "Mat. + Fis.", max: 15, color: "#df6b57" },
+      { key: "natureza", label: "Bio/Qui disc.", max: 8, color: "#d09b2c" }
+    ]
+  },
+  {
+    id: "famerp",
+    label: "FAMERP",
+    totalMax: 80,
+    seed: [],
+    placeholder: "Ex: FAMERP 2026 - Conhecimentos Gerais",
+    note: "Conhecimentos Gerais",
+    sections: [
+      { key: "humanas", label: "Humanas", max: 20, color: "#1f8a70" },
+      { key: "linguagens", label: "Linguagens", max: 20, color: "#3772ff" },
+      { key: "matematica", label: "Mat. + Fis.", max: 20, color: "#df6b57" },
+      { key: "natureza", label: "Bio + Qui.", max: 20, color: "#d09b2c" }
+    ]
+  },
+  {
+    id: "unifesp",
+    label: "UNIFESP",
+    totalMax: 155,
+    seed: [],
+    placeholder: "Ex: UNIFESP 2026 - provas complementares",
+    note: "provas complementares sem ENEM",
+    sections: [
+      { key: "linguagens", label: "Ling. + Redacao", max: 75, color: "#3772ff" },
+      { key: "natureza", label: "Especificas", max: 80, color: "#d09b2c" }
+    ]
+  }
 ];
 
 const el = {
   status: document.querySelector("#data-status"),
+  goalPercent: document.querySelector("#goal-percent"),
+  goalTotal: document.querySelector("#goal-total"),
+  goalMeterFill: document.querySelector("#goal-meter-fill"),
+  chartGoalPill: document.querySelector("#chart-goal-pill"),
+  targetList: document.querySelector("#target-list"),
   progressChart: document.querySelector("#progress-chart"),
   examCarousel: document.querySelector("#exam-carousel"),
   table: document.querySelector("#exam-table"),
+  tableHead: document.querySelector("thead tr"),
   form: document.querySelector("#exam-form"),
   formTitle: document.querySelector("#entry-title"),
   id: document.querySelector("#exam-id"),
@@ -49,7 +117,13 @@ const el = {
   importData: document.querySelector("#import-data"),
   importFile: document.querySelector("#import-file"),
   resetData: document.querySelector("#reset-data"),
-  boardTabs: [...document.querySelectorAll("[data-board]")]
+  boardTabs: [...document.querySelectorAll("[data-board]")],
+  labels: {
+    humanas: document.querySelector("#label-humanas"),
+    linguagens: document.querySelector("#label-linguagens"),
+    matematica: document.querySelector("#label-matematica"),
+    natureza: document.querySelector("#label-natureza")
+  }
 };
 
 let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
@@ -63,6 +137,18 @@ function boardById(id) {
 
 function storageKey(board) {
   return `${STORAGE_PREFIX}.${board.id}`;
+}
+
+function targetTotal(board = activeBoard) {
+  return Math.ceil(board.totalMax * TARGET_RATE);
+}
+
+function scoreKeys() {
+  return ["humanas", "linguagens", "matematica", "natureza"];
+}
+
+function sectionByKey(board, key) {
+  return board.sections.find((section) => section.key === key);
 }
 
 function withId(exam) {
@@ -90,20 +176,21 @@ function nullableScore(value) {
 
 function scoreFromInput(input) {
   const value = nullableScore(input.value);
-  return value === null ? null : Math.max(0, Math.min(45, Math.round(value)));
+  const max = Number(input.max || activeBoard.totalMax);
+  return value === null ? null : Math.max(0, Math.min(max, Math.round(value)));
 }
 
-function computeTotal(exam) {
-  const scores = [exam.humanas, exam.linguagens, exam.matematica, exam.natureza];
+function computeTotal(exam, board = activeBoard) {
+  const scores = board.sections.map((section) => exam[section.key]);
   if (scores.every((score) => score !== null)) {
     return scores.reduce((sum, score) => sum + score, 0);
   }
   return exam.total ?? null;
 }
 
-function normalizeExams(raw) {
+function normalizeExams(raw, board = activeBoard) {
   if (!Array.isArray(raw)) return [];
-  return raw.map(withId).filter((exam) => exam.prova && computeTotal(exam) !== null);
+  return raw.map(withId).filter((exam) => exam.prova && computeTotal(exam, board) !== null);
 }
 
 function readStoredArray(key) {
@@ -117,12 +204,12 @@ function readStoredArray(key) {
 
 function loadExams(board) {
   const stored = readStoredArray(storageKey(board));
-  if (stored) return normalizeExams(stored);
+  if (stored) return normalizeExams(stored, board);
 
   if (board.id === "enem") {
     const legacy = readStoredArray(LEGACY_STORAGE_KEY);
     if (legacy) {
-      const migrated = normalizeExams(legacy);
+      const migrated = normalizeExams(legacy, board);
       localStorage.setItem(storageKey(board), JSON.stringify(migrated));
       return migrated;
     }
@@ -160,8 +247,10 @@ function escapeHtml(value) {
 }
 
 function statusFor(total) {
-  if (total >= TARGET_TOTAL) return { label: "meta batida", className: "badge--hit" };
-  if (total >= TARGET_TOTAL - 8) return { label: "perto", className: "badge--near" };
+  const target = targetTotal();
+  const nearWindow = Math.max(2, Math.ceil(activeBoard.totalMax * 0.05));
+  if (total >= target) return { label: "meta batida", className: "badge--hit" };
+  if (total >= target - nearWindow) return { label: "perto", className: "badge--near" };
   return { label: "subindo", className: "badge--low" };
 }
 
@@ -173,11 +262,12 @@ function drawProgressChart(canvas) {
   const padding = { top: 22, right: 22, bottom: 56, left: 46 };
   const plotW = width - padding.left - padding.right;
   const plotH = height - padding.top - padding.bottom;
-  const max = 180;
-  const min = data.length ? Math.max(0, Math.min(...data.map((exam) => exam.total), TARGET_TOTAL) - 12) : 0;
+  const max = activeBoard.totalMax;
+  const target = targetTotal();
+  const min = data.length ? Math.max(0, Math.min(...data.map((exam) => exam.total), target) - Math.ceil(max * 0.07)) : 0;
 
   ctx.clearRect(0, 0, width, height);
-  drawGrid(ctx, padding, width, height, [min, TARGET_TOTAL, max], min, max);
+  drawGrid(ctx, padding, width, height, [min, target, max], min, max);
 
   if (!data.length) {
     drawEmptyChart(ctx, width, height, `Sem provas de ${activeBoard.label}`);
@@ -190,7 +280,7 @@ function drawProgressChart(canvas) {
     y: padding.top + plotH - ((exam.total - min) / (max - min)) * plotH
   }));
 
-  const targetY = padding.top + plotH - ((TARGET_TOTAL - min) / (max - min)) * plotH;
+  const targetY = padding.top + plotH - ((target - min) / (max - min)) * plotH;
   ctx.strokeStyle = "#1f8a70";
   ctx.setLineDash([8, 8]);
   ctx.beginPath();
@@ -209,7 +299,7 @@ function drawProgressChart(canvas) {
   ctx.stroke();
 
   points.forEach((point) => {
-    ctx.fillStyle = point.exam.total >= TARGET_TOTAL ? "#1f8a70" : "#df6b57";
+    ctx.fillStyle = point.exam.total >= target ? "#1f8a70" : "#df6b57";
     ctx.beginPath();
     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
     ctx.fill();
@@ -279,11 +369,20 @@ function renderTable() {
   const rows = exams
     .map((exam) => ({ ...exam, total: computeTotal(exam) }))
     .filter((exam) => exam.total !== null);
+  const columns = activeBoard.sections;
+
+  el.tableHead.innerHTML = `
+    <th>Prova</th>
+    ${columns.map((section) => `<th>${escapeHtml(section.label)}</th>`).join("")}
+    <th>Total</th>
+    <th>Status</th>
+    <th>Acoes</th>
+  `;
 
   if (!rows.length) {
     el.table.innerHTML = `
       <tr>
-        <td class="empty-table" colspan="8">Sem provas cadastradas em ${activeBoard.label}</td>
+        <td class="empty-table" colspan="${columns.length + 4}">Sem provas cadastradas em ${activeBoard.label}</td>
       </tr>
     `;
     return;
@@ -295,11 +394,8 @@ function renderTable() {
       return `
         <tr>
           <td>${escapeHtml(exam.prova)}</td>
-          <td>${formatNumber(exam.humanas)}</td>
-          <td>${formatNumber(exam.linguagens)}</td>
-          <td>${formatNumber(exam.matematica)}</td>
-          <td>${formatNumber(exam.natureza)}</td>
-          <td>${exam.total}/180</td>
+          ${columns.map((section) => `<td>${formatNumber(exam[section.key])}</td>`).join("")}
+          <td>${exam.total}/${activeBoard.totalMax}</td>
           <td><span class="badge ${status.className}">${status.label}</span></td>
           <td>
             <div class="row-actions">
@@ -314,12 +410,7 @@ function renderTable() {
 }
 
 function renderExamCarousel() {
-  const areas = [
-    ["humanas", "Humanas", "#1f8a70"],
-    ["linguagens", "Linguagens", "#3772ff"],
-    ["matematica", "Matematica", "#df6b57"],
-    ["natureza", "Natureza", "#d09b2c"]
-  ];
+  const areas = activeBoard.sections;
   const visibleExams = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
 
   if (!visibleExams.length) {
@@ -331,16 +422,16 @@ function renderExamCarousel() {
     .map((exam) => {
       const status = statusFor(exam.total);
       const rows = areas
-        .map(([key, label, color]) => {
-          const value = exam[key];
-          const width = value === null ? 0 : Math.max(2, Math.min(100, (value / 45) * 100));
+        .map((section) => {
+          const value = exam[section.key];
+          const width = value === null ? 0 : Math.max(2, Math.min(100, (value / section.max) * 100));
           return `
             <div class="area-row">
-              <span>${label}</span>
+              <span>${escapeHtml(section.label)}</span>
               <div class="area-track" aria-hidden="true">
-                <div class="area-fill" style="width: ${width}%; --area-color: ${color};"></div>
+                <div class="area-fill" style="width: ${width}%; --area-color: ${section.color};"></div>
               </div>
-              <strong>${formatNumber(value)}</strong>
+              <strong>${formatNumber(value)}/${section.max}</strong>
             </div>
           `;
         })
@@ -356,7 +447,7 @@ function renderExamCarousel() {
             <div class="exam-score-card__total">
               <span>Total</span>
               <strong>${exam.total}</strong>
-              <span>/180</span>
+              <span>/${activeBoard.totalMax}</span>
             </div>
           </div>
           <div class="area-bars">${rows}</div>
@@ -374,15 +465,60 @@ function updateBoardTabs() {
   });
 }
 
+function renderTargets() {
+  const target = targetTotal();
+  el.goalPercent.textContent = `${Math.round(TARGET_RATE * 100)}%`;
+  el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
+  el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
+  el.chartGoalPill.textContent = `Meta ${target}`;
+
+  const sectionTargets = activeBoard.sections
+    .map((section) => `
+      <div>
+        <span>${escapeHtml(section.label)}</span>
+        <strong>${Math.ceil(section.max * TARGET_RATE)}/${section.max}</strong>
+        <small>referencia de 92% nesse bloco</small>
+      </div>
+    `)
+    .join("");
+
+  el.targetList.innerHTML = `
+    <div>
+      <span>Total</span>
+      <strong>${target}/${activeBoard.totalMax}</strong>
+      <small>${activeBoard.note}</small>
+    </div>
+    ${sectionTargets}
+  `;
+}
+
 function updateFormForBoard() {
   el.prova.placeholder = activeBoard.placeholder;
   if (!el.id.value) el.formTitle.textContent = "Nova prova";
+
+  scoreKeys().forEach((key) => {
+    const input = el[key];
+    const label = input.closest("label");
+    const section = sectionByKey(activeBoard, key);
+
+    label.hidden = !section;
+    input.disabled = !section;
+    input.required = Boolean(section);
+    input.max = section ? String(section.max) : "0";
+    input.placeholder = section ? `0-${section.max}` : "";
+
+    if (section) {
+      el.labels[key].textContent = section.label;
+    } else {
+      input.value = "";
+    }
+  });
 }
 
 function updateFormTotal() {
   const draft = readForm();
   const total = computeTotal(draft) ?? 0;
-  el.formTotal.textContent = `${total}/180`;
+  el.formTotal.textContent = `${total}/${activeBoard.totalMax}`;
 }
 
 function readForm() {
@@ -524,6 +660,7 @@ function switchBoard(boardId) {
 function render() {
   updateBoardTabs();
   updateFormForBoard();
+  renderTargets();
   drawCharts(true);
   renderExamCarousel();
   renderTable();
