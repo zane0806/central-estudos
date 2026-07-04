@@ -1,6 +1,8 @@
 const STORAGE_KEY = "central-estudos.exams.v2";
 const TARGET_TOTAL = 166;
 
+document.querySelector(".summary-grid")?.remove();
+
 const seedExams = [
   { prova: "ENEM 2019", humanas: 41, linguagens: 34, matematica: 36, natureza: 34, total: 145, obs: "" },
   { prova: "ENEM 2024 PPL", humanas: 38, linguagens: 34, matematica: 38, natureza: 35, total: 145, obs: "" },

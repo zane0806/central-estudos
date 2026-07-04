@@ -238,6 +238,7 @@ button:disabled {
 }
 
 .summary-grid {
+  display: none !important;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 16px;
 }
