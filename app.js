@@ -45,6 +45,8 @@ const el = {
 };
 
 let exams = loadExams();
+let chartFrame = 0;
+const chartWidths = new WeakMap();
 
 function withId(exam) {
   return {
@@ -258,8 +260,11 @@ function drawAreaChart(canvas) {
 
 function prepareCanvas(canvas) {
   const ratio = window.devicePixelRatio || 1;
-  const width = canvas.clientWidth;
-  const height = Number(canvas.getAttribute("height"));
+  const width = Math.max(1, Math.round(canvas.getBoundingClientRect().width));
+  if (!canvas.dataset.displayHeight) {
+    canvas.dataset.displayHeight = canvas.getAttribute("height") || "260";
+  }
+  const height = Number(canvas.dataset.displayHeight);
   canvas.width = width * ratio;
   canvas.height = height * ratio;
   canvas.style.height = `${height}px`;
@@ -465,14 +470,31 @@ function resetData() {
 
 function render() {
   updateMetrics();
-  drawProgressChart(el.progressChart);
-  drawAreaChart(el.areaChart);
+  drawCharts(true);
   renderTable();
+}
 
-  window.onresize = () => {
-    drawProgressChart(el.progressChart);
-    drawAreaChart(el.areaChart);
-  };
+function drawCharts(force = false) {
+  const charts = [
+    [el.progressChart, drawProgressChart],
+    [el.areaChart, drawAreaChart]
+  ];
+
+  charts.forEach(([canvas, draw]) => {
+    const width = Math.round(canvas.getBoundingClientRect().width);
+    if (!width) return;
+    if (!force && chartWidths.get(canvas) === width) return;
+    chartWidths.set(canvas, width);
+    draw(canvas);
+  });
+}
+
+function scheduleChartResize() {
+  if (chartFrame) return;
+  chartFrame = requestAnimationFrame(() => {
+    chartFrame = 0;
+    drawCharts(false);
+  });
 }
 
 el.form.addEventListener("submit", saveForm);
@@ -486,6 +508,8 @@ el.resetData.addEventListener("click", resetData);
 [el.humanas, el.linguagens, el.matematica, el.natureza].forEach((input) => {
   input.addEventListener("input", updateFormTotal);
 });
+
+window.addEventListener("resize", scheduleChartResize, { passive: true });
 
 render();
 updateFormTotal();
