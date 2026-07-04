@@ -120,6 +120,8 @@ function statusFor(total) {
 }
 
 function updateMetrics() {
+  if (!el.bestExam) return;
+
   const withTotal = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
 
   if (!withTotal.length) {

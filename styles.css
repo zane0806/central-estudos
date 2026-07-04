@@ -369,7 +369,7 @@ button:disabled {
 }
 
 .chart-card--wide {
-  grid-row: span 2;
+  grid-column: 1 / -1;
 }
 
 .section-heading {
