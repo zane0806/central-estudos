@@ -77,11 +77,12 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
+  position: relative;
   padding: clamp(26px, 6vw, 56px);
   background:
-    linear-gradient(110deg, rgba(16, 20, 24, 0.88), rgba(16, 20, 24, 0.5)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,0.1) 0 1px, transparent 1px 24px),
-    linear-gradient(135deg, #101418, #245c54 52%, #b85f51);
+    linear-gradient(110deg, rgba(16, 20, 24, 0.82), rgba(16, 20, 24, 0.28)),
+    linear-gradient(0deg, rgba(16, 20, 24, 0.76), rgba(16, 20, 24, 0.12) 52%, rgba(16, 20, 24, 0.58)),
+    url("./assets/hero.jpg") center 42% / cover;
 }
 
 .eyebrow {
@@ -107,6 +108,10 @@ h1 {
   max-width: 760px;
   font-size: clamp(3rem, 8vw, 6.8rem);
   line-height: 0.9;
+}
+
+.hero h1 {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 h2 {
@@ -395,6 +400,99 @@ canvas {
   height: 260px;
 }
 
+.exam-carousel-card {
+  min-height: 420px;
+}
+
+.exam-carousel {
+  display: grid;
+  gap: 12px;
+  max-height: 560px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-right: 6px;
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.exam-score-card {
+  display: grid;
+  gap: 14px;
+  min-height: 214px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfc;
+  scroll-snap-align: start;
+}
+
+.exam-score-card__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.exam-score-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.exam-score-card__total {
+  display: grid;
+  gap: 3px;
+  min-width: 76px;
+  text-align: right;
+}
+
+.exam-score-card__total strong {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.exam-score-card__total span,
+.area-row span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.area-bars {
+  display: grid;
+  gap: 10px;
+}
+
+.area-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 34px;
+  gap: 10px;
+  align-items: center;
+}
+
+.area-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ecef;
+}
+
+.area-fill {
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: var(--area-color, var(--green));
+}
+
+.exam-empty {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .target-list {
   display: grid;
   gap: 10px;
@@ -527,8 +625,12 @@ td {
   }
 
   h1 {
-    font-size: clamp(2.85rem, 15vw, 3.8rem);
+    font-size: clamp(4rem, 23vw, 5.8rem);
     line-height: 0.95;
+  }
+
+  .hero h1 {
+    color: rgba(255, 255, 255, 0.68);
   }
 
   .summary-grid {
@@ -556,5 +658,13 @@ td {
 
   .exam-form__wide {
     grid-column: span 1;
+  }
+
+  .exam-carousel {
+    max-height: 470px;
+  }
+
+  .area-row {
+    grid-template-columns: 76px minmax(0, 1fr) 30px;
   }
 }

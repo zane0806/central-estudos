@@ -24,7 +24,7 @@ const el = {
   goalGap: document.querySelector("#goal-gap"),
   recentTrend: document.querySelector("#recent-trend"),
   progressChart: document.querySelector("#progress-chart"),
-  areaChart: document.querySelector("#area-chart"),
+  examCarousel: document.querySelector("#exam-carousel"),
   table: document.querySelector("#exam-table"),
   form: document.querySelector("#exam-form"),
   formTitle: document.querySelector("#entry-title"),
@@ -213,51 +213,6 @@ function drawProgressChart(canvas) {
   });
 }
 
-function drawAreaChart(canvas) {
-  const ctx = prepareCanvas(canvas);
-  const keys = [
-    ["humanas", "Humanas", "#1f8a70"],
-    ["linguagens", "Linguagens", "#3772ff"],
-    ["matematica", "Matematica", "#df6b57"],
-    ["natureza", "Natureza", "#d09b2c"]
-  ];
-  const values = keys.map(([key, label, color]) => {
-    const available = exams.map((exam) => exam[key]).filter((value) => value !== null);
-    const average = available.length ? available.reduce((sum, value) => sum + value, 0) / available.length : 0;
-    return { label, color, value: average };
-  });
-
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const padding = { top: 20, right: 18, bottom: 40, left: 34 };
-  const plotW = width - padding.left - padding.right;
-  const plotH = height - padding.top - padding.bottom;
-  const barGap = 16;
-  const barW = (plotW - barGap * (values.length - 1)) / values.length;
-
-  ctx.clearRect(0, 0, width, height);
-  drawGrid(ctx, padding, width, height, [0, 21, 42, 45], 0, 45);
-
-  values.forEach((item, index) => {
-    const x = padding.left + index * (barW + barGap);
-    const h = (item.value / 45) * plotH;
-    const y = padding.top + plotH - h;
-
-    ctx.fillStyle = item.color;
-    roundedRect(ctx, x, y, barW, Math.max(h, 2), 6);
-    ctx.fill();
-
-    ctx.fillStyle = "#172026";
-    ctx.font = "800 13px system-ui";
-    ctx.textAlign = "center";
-    ctx.fillText(Math.round(item.value), x + barW / 2, y - 8);
-
-    ctx.fillStyle = "#63707a";
-    ctx.font = "700 11px system-ui";
-    ctx.fillText(item.label, x + barW / 2, height - 14);
-  });
-}
-
 function prepareCanvas(canvas) {
   const ratio = window.devicePixelRatio || 1;
   const width = Math.max(1, Math.round(canvas.getBoundingClientRect().width));
@@ -336,6 +291,59 @@ function renderTable() {
             </div>
           </td>
         </tr>
+      `;
+    })
+    .join("");
+}
+
+function renderExamCarousel() {
+  const areas = [
+    ["humanas", "Humanas", "#1f8a70"],
+    ["linguagens", "Linguagens", "#3772ff"],
+    ["matematica", "Matematica", "#df6b57"],
+    ["natureza", "Natureza", "#d09b2c"]
+  ];
+  const visibleExams = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
+
+  if (!visibleExams.length) {
+    el.examCarousel.innerHTML = `<div class="exam-empty">Sem provas cadastradas</div>`;
+    return;
+  }
+
+  el.examCarousel.innerHTML = visibleExams
+    .map((exam) => {
+      const status = statusFor(exam.total);
+      const rows = areas
+        .map(([key, label, color]) => {
+          const value = exam[key];
+          const width = value === null ? 0 : Math.max(2, Math.min(100, (value / 45) * 100));
+          return `
+            <div class="area-row">
+              <span>${label}</span>
+              <div class="area-track" aria-hidden="true">
+                <div class="area-fill" style="width: ${width}%; --area-color: ${color};"></div>
+              </div>
+              <strong>${formatNumber(value)}</strong>
+            </div>
+          `;
+        })
+        .join("");
+
+      return `
+        <article class="exam-score-card">
+          <div class="exam-score-card__head">
+            <div>
+              <h3>${escapeHtml(exam.prova)}</h3>
+              <span class="badge ${status.className}">${status.label}</span>
+            </div>
+            <div class="exam-score-card__total">
+              <span>Total</span>
+              <strong>${exam.total}</strong>
+              <span>/180</span>
+            </div>
+          </div>
+          <div class="area-bars">${rows}</div>
+        </article>
       `;
     })
     .join("");
@@ -471,13 +479,13 @@ function resetData() {
 function render() {
   updateMetrics();
   drawCharts(true);
+  renderExamCarousel();
   renderTable();
 }
 
 function drawCharts(force = false) {
   const charts = [
-    [el.progressChart, drawProgressChart],
-    [el.areaChart, drawAreaChart]
+    [el.progressChart, drawProgressChart]
   ];
 
   charts.forEach(([canvas, draw]) => {
