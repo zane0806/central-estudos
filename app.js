@@ -644,10 +644,10 @@ function renderScoreFields(exam = null) {
             data-score-key="${section.key}"
             name="${section.key}"
             type="number"
-            inputmode="numeric"
+            inputmode="decimal"
             min="0"
             max="${section.max}"
-            step="0.1"
+            step="any"
             placeholder="0-${section.max}"
             value="${value ?? ""}"
             ${section.countsTowardTotal === false ? "" : "required"}
