@@ -587,9 +587,9 @@ function updateBoardTabs() {
 
 function renderTargets() {
   const target = targetTotal();
-  el.goalPercent.textContent = `${Math.round(TARGET_RATE * 100)}%`;
-  el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
-  el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
+  if (el.goalPercent) el.goalPercent.textContent = `${Math.round(TARGET_RATE * 100)}%`;
+  if (el.goalTotal) el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
+  if (el.goalMeterFill) el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
   el.chartGoalPill.textContent = `Meta ${target}`;
 
   if (activeBoard.conversion === "unifesp-days") {

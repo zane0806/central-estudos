@@ -51,10 +51,10 @@ body {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: stretch;
-  min-height: 360px;
+  min-height: 430px;
   margin-bottom: 20px;
   color: #f9fbfb;
 }
@@ -76,6 +76,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  min-height: inherit;
   overflow: hidden;
   position: relative;
   padding: clamp(26px, 6vw, 56px);
@@ -637,7 +638,7 @@ td {
   }
 
   .hero {
-    min-height: 0;
+    min-height: 360px;
   }
 
   .goal-panel {
