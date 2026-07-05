@@ -109,17 +109,18 @@ const boards = [
   {
     id: "unifesp",
     label: "UNIFESP",
-    totalMax: 45,
+    totalMax: 100,
+    conversion: "unifesp-days",
     seed: [],
     placeholder: "Ex: UNIFESP 2026 - complementares",
-    note: "Provas complementares sem redacao: 25 objetivas + 20 especificas",
+    note: "Notas convertidas: Dia 1 e Dia 2 em escala de 0 a 100",
     sections: [
-      { key: "portugues", label: "Portugues", max: 15, color: colors.blue },
-      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
-      { key: "biologia", label: "Biologia", max: 5, color: colors.gold },
-      { key: "quimica", label: "Quimica", max: 5, color: colors.red },
-      { key: "fisica", label: "Fisica", max: 5, color: colors.coral },
-      { key: "matematica", label: "Matematica", max: 5, color: colors.blue }
+      { key: "portugues", label: "Portugues", max: 15, color: colors.blue, group: "dia1" },
+      { key: "ingles", label: "Ingles", max: 10, color: colors.teal, group: "dia1" },
+      { key: "biologia", label: "Biologia", max: 5, color: colors.gold, group: "dia2" },
+      { key: "quimica", label: "Quimica", max: 5, color: colors.red, group: "dia2" },
+      { key: "fisica", label: "Fisica", max: 5, color: colors.coral, group: "dia2" },
+      { key: "matematica", label: "Matematica", max: 5, color: colors.blue, group: "dia2" }
     ]
   }
 ];
@@ -211,12 +212,45 @@ function scoreFromInput(input) {
 }
 
 function computeTotal(exam, board = activeBoard) {
+  if (board.conversion === "unifesp-days") {
+    const converted = computeUnifespConverted(exam, board);
+    if (!converted.complete) return exam.total ?? null;
+    return Math.round((converted.dia1.score + converted.dia2.score) / 2);
+  }
+
   const countedSections = board.sections.filter((section) => section.countsTowardTotal !== false);
   const scores = countedSections.map((section) => getScore(exam, section.key));
   if (scores.every((score) => score !== null)) {
     return scores.reduce((sum, score) => sum + score, 0);
   }
   return exam.total ?? null;
+}
+
+function computeUnifespConverted(exam, board = activeBoard) {
+  const groups = [
+    { key: "dia1", label: "Dia 1", sections: board.sections.filter((section) => section.group === "dia1") },
+    { key: "dia2", label: "Dia 2", sections: board.sections.filter((section) => section.group === "dia2") }
+  ];
+
+  const result = {};
+  groups.forEach((group) => {
+    const rawMax = group.sections.reduce((sum, section) => sum + section.max, 0);
+    const values = group.sections.map((section) => getScore(exam, section.key));
+    const complete = values.every((value) => value !== null);
+    const raw = values.reduce((sum, value) => sum + (value ?? 0), 0);
+    result[group.key] = {
+      label: group.label,
+      raw,
+      rawMax,
+      complete,
+      score: complete ? Math.round((raw / rawMax) * 100) : null
+    };
+  });
+
+  return {
+    ...result,
+    complete: groups.every((group) => result[group.key].complete)
+  };
 }
 
 function secondarySections(board = activeBoard) {
@@ -464,10 +498,20 @@ function renderTable() {
 }
 
 function formatTotalCell(exam) {
+  if (activeBoard.conversion === "unifesp-days") {
+    const converted = computeUnifespConverted(exam);
+    return `Media ${exam.total}/100 | D1 ${formatConvertedDay(converted.dia1)} | D2 ${formatConvertedDay(converted.dia2)}`;
+  }
+
   const secondary = computeSecondaryTotal(exam);
   const max = secondaryMax();
   if (secondary === null || !max) return `${exam.total}/${activeBoard.totalMax}`;
   return `${exam.total}/${activeBoard.totalMax} + ${secondary}/${max}`;
+}
+
+function formatConvertedDay(day) {
+  if (!day.complete) return "--/100";
+  return `${day.score}/100 (${day.raw}/${day.rawMax})`;
 }
 
 function renderExamCarousel() {
@@ -519,6 +563,14 @@ function renderExamCarousel() {
 }
 
 function renderSecondaryTotal(exam) {
+  if (activeBoard.conversion === "unifesp-days") {
+    const converted = computeUnifespConverted(exam);
+    return `
+      <span>${formatConvertedDay(converted.dia1)}</span>
+      <span>${formatConvertedDay(converted.dia2)}</span>
+    `;
+  }
+
   const secondary = computeSecondaryTotal(exam);
   const max = secondaryMax();
   if (secondary === null || !max) return "";
@@ -539,6 +591,27 @@ function renderTargets() {
   el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
   el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
   el.chartGoalPill.textContent = `Meta ${target}`;
+
+  if (activeBoard.conversion === "unifesp-days") {
+    el.targetList.innerHTML = `
+      <div>
+        <span>Media convertida</span>
+        <strong>${target}/${activeBoard.totalMax}</strong>
+        <small>media entre Dia 1 e Dia 2, ambos em escala 0-100</small>
+      </div>
+      <div>
+        <span>Dia 1</span>
+        <strong>92/100</strong>
+        <small>Portugues + Ingles: acertos de 0-25 convertidos para 0-100</small>
+      </div>
+      <div>
+        <span>Dia 2</span>
+        <strong>92/100</strong>
+        <small>Biologia + Quimica + Fisica + Matematica: acertos de 0-20 convertidos para 0-100</small>
+      </div>
+    `;
+    return;
+  }
 
   const sectionTargets = activeBoard.sections
     .map((section) => `
@@ -566,7 +639,7 @@ function renderScoreFields(exam = null) {
       const value = exam ? getScore(exam, section.key) : null;
       return `
         <label>
-          ${escapeHtml(section.label)}
+          ${escapeHtml(section.label)}${section.group ? ` <small>${section.group === "dia1" ? "Dia 1" : "Dia 2"}</small>` : ""}
           <input
             data-score-key="${section.key}"
             name="${section.key}"
@@ -598,6 +671,14 @@ function updateFormForBoard() {
 
 function updateFormTotal() {
   const draft = readForm();
+
+  if (activeBoard.conversion === "unifesp-days") {
+    const converted = computeUnifespConverted(draft);
+    const total = converted.complete ? Math.round((converted.dia1.score + converted.dia2.score) / 2) : 0;
+    el.formTotal.textContent = `Media ${total}/100 | D1 ${formatConvertedDay(converted.dia1)} | D2 ${formatConvertedDay(converted.dia2)}`;
+    return;
+  }
+
   const total = computeTotal(draft) ?? 0;
   const secondary = computeSecondaryTotal(draft);
   const max = secondaryMax();
