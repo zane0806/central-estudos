@@ -61,13 +61,13 @@ const boards = [
       { key: "literatura", label: "Literatura", max: 8, color: colors.violet },
       { key: "artes", label: "Artes", max: 2, color: colors.pink },
       { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
-      { key: "historia", label: "Historia", max: 8, color: colors.green },
-      { key: "geografia", label: "Geografia", max: 8, color: colors.olive },
-      { key: "filosofia_sociologia", label: "Filo/Socio", max: 4, color: colors.slate },
-      { key: "biologia", label: "Biologia", max: 10, color: colors.gold },
-      { key: "quimica", label: "Quimica", max: 10, color: colors.red },
-      { key: "fisica", label: "Fisica", max: 10, color: colors.coral },
-      { key: "matematica", label: "Matematica", max: 10, color: colors.blue }
+      { key: "historia", label: "Historia", max: 10, color: colors.green },
+      { key: "geografia", label: "Geografia", max: 10, color: colors.olive },
+      { key: "filosofia_sociologia", label: "Filo/Socio", max: 10, color: colors.slate },
+      { key: "biologia", label: "Biologia", max: 8, color: colors.gold },
+      { key: "quimica", label: "Quimica", max: 7, color: colors.red },
+      { key: "fisica", label: "Fisica", max: 7, color: colors.coral },
+      { key: "matematica", label: "Matematica", max: 8, color: colors.blue }
     ]
   },
   {
@@ -76,14 +76,16 @@ const boards = [
     totalMax: 40,
     seed: [],
     placeholder: "Ex: FAMEMA 2026 - objetiva",
-    note: "Prova II objetiva; discursivas de quimica/biologia ficam fora deste total",
+    note: "Prova II objetiva; discursivas de quimica/biologia aparecem em contagem separada",
     sections: [
       { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
       { key: "matematica", label: "Matematica", max: 10, color: colors.coral },
       { key: "geografia", label: "Geografia", max: 5, color: colors.olive },
       { key: "historia", label: "Historia", max: 5, color: colors.green },
       { key: "ingles", label: "Ingles", max: 5, color: colors.teal },
-      { key: "fisica", label: "Fisica", max: 5, color: colors.gold }
+      { key: "fisica", label: "Fisica", max: 5, color: colors.gold },
+      { key: "disc_quimica", label: "Disc. Quimica", max: 4, color: colors.red, countsTowardTotal: false },
+      { key: "disc_biologia", label: "Disc. Biologia", max: 4, color: colors.gold, countsTowardTotal: false }
     ]
   },
   {
@@ -209,11 +211,28 @@ function scoreFromInput(input) {
 }
 
 function computeTotal(exam, board = activeBoard) {
-  const scores = board.sections.map((section) => getScore(exam, section.key));
+  const countedSections = board.sections.filter((section) => section.countsTowardTotal !== false);
+  const scores = countedSections.map((section) => getScore(exam, section.key));
   if (scores.every((score) => score !== null)) {
     return scores.reduce((sum, score) => sum + score, 0);
   }
   return exam.total ?? null;
+}
+
+function secondarySections(board = activeBoard) {
+  return board.sections.filter((section) => section.countsTowardTotal === false);
+}
+
+function computeSecondaryTotal(exam, board = activeBoard) {
+  const sections = secondarySections(board);
+  if (!sections.length) return null;
+  const scores = sections.map((section) => getScore(exam, section.key));
+  if (!scores.some((score) => score !== null)) return null;
+  return scores.reduce((sum, score) => sum + (score ?? 0), 0);
+}
+
+function secondaryMax(board = activeBoard) {
+  return secondarySections(board).reduce((sum, section) => sum + section.max, 0);
 }
 
 function normalizeExams(raw, board = activeBoard) {
@@ -430,7 +449,7 @@ function renderTable() {
         <tr>
           <td>${escapeHtml(exam.prova)}</td>
           ${columns.map((section) => `<td>${formatNumber(getScore(exam, section.key))}</td>`).join("")}
-          <td>${exam.total}/${activeBoard.totalMax}</td>
+          <td>${formatTotalCell(exam)}</td>
           <td><span class="badge ${status.className}">${status.label}</span></td>
           <td>
             <div class="row-actions">
@@ -442,6 +461,13 @@ function renderTable() {
       `;
     })
     .join("");
+}
+
+function formatTotalCell(exam) {
+  const secondary = computeSecondaryTotal(exam);
+  const max = secondaryMax();
+  if (secondary === null || !max) return `${exam.total}/${activeBoard.totalMax}`;
+  return `${exam.total}/${activeBoard.totalMax} + ${secondary}/${max}`;
 }
 
 function renderExamCarousel() {
@@ -482,6 +508,7 @@ function renderExamCarousel() {
               <span>Total</span>
               <strong>${exam.total}</strong>
               <span>/${activeBoard.totalMax}</span>
+              ${renderSecondaryTotal(exam)}
             </div>
           </div>
           <div class="area-bars">${rows}</div>
@@ -489,6 +516,13 @@ function renderExamCarousel() {
       `;
     })
     .join("");
+}
+
+function renderSecondaryTotal(exam) {
+  const secondary = computeSecondaryTotal(exam);
+  const max = secondaryMax();
+  if (secondary === null || !max) return "";
+  return `<span>Disc. ${secondary}/${max}</span>`;
 }
 
 function updateBoardTabs() {
@@ -511,7 +545,7 @@ function renderTargets() {
       <div>
         <span>${escapeHtml(section.label)}</span>
         <strong>${Math.ceil(section.max * TARGET_RATE)}/${section.max}</strong>
-        <small>referencia de 92% nesse bloco</small>
+        <small>${section.countsTowardTotal === false ? "contagem separada" : "referencia de 92% nesse bloco"}</small>
       </div>
     `)
     .join("");
@@ -542,7 +576,7 @@ function renderScoreFields(exam = null) {
             max="${section.max}"
             placeholder="0-${section.max}"
             value="${value ?? ""}"
-            required
+            ${section.countsTowardTotal === false ? "" : "required"}
           >
         </label>
       `;
@@ -565,7 +599,11 @@ function updateFormForBoard() {
 function updateFormTotal() {
   const draft = readForm();
   const total = computeTotal(draft) ?? 0;
-  el.formTotal.textContent = `${total}/${activeBoard.totalMax}`;
+  const secondary = computeSecondaryTotal(draft);
+  const max = secondaryMax();
+  el.formTotal.textContent = secondary === null || !max
+    ? `${total}/${activeBoard.totalMax}`
+    : `${total}/${activeBoard.totalMax} + ${secondary}/${max}`;
 }
 
 function readForm() {
