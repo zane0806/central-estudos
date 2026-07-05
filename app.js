@@ -208,14 +208,14 @@ function cloneSeed(board) {
 function scoreFromInput(input) {
   const value = nullableScore(input.value);
   const max = Number(input.max || activeBoard.totalMax);
-  return value === null ? null : Math.max(0, Math.min(max, Math.round(value)));
+  return value === null ? null : Math.max(0, Math.min(max, value));
 }
 
 function computeTotal(exam, board = activeBoard) {
   if (board.conversion === "unifesp-days") {
     const converted = computeUnifespConverted(exam, board);
     if (!converted.complete) return exam.total ?? null;
-    return Math.round((converted.dia1.score + converted.dia2.score) / 2);
+    return Number(((converted.dia1.score + converted.dia2.score) / 2).toFixed(2));
   }
 
   const countedSections = board.sections.filter((section) => section.countsTowardTotal !== false);
@@ -243,7 +243,7 @@ function computeUnifespConverted(exam, board = activeBoard) {
       raw,
       rawMax,
       complete,
-      score: complete ? Math.round((raw / rawMax) * 100) : null
+      score: complete ? Number(((raw / rawMax) * 100).toFixed(2)) : null
     };
   });
 
@@ -322,7 +322,7 @@ function updateStatusForBoard() {
 
 function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "--";
-  return `${Math.round(value)}`;
+  return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }
 
 function escapeHtml(value) {
@@ -647,6 +647,7 @@ function renderScoreFields(exam = null) {
             inputmode="numeric"
             min="0"
             max="${section.max}"
+            step="0.1"
             placeholder="0-${section.max}"
             value="${value ?? ""}"
             ${section.countsTowardTotal === false ? "" : "required"}
@@ -674,7 +675,7 @@ function updateFormTotal() {
 
   if (activeBoard.conversion === "unifesp-days") {
     const converted = computeUnifespConverted(draft);
-    const total = converted.complete ? Math.round((converted.dia1.score + converted.dia2.score) / 2) : 0;
+    const total = converted.complete ? Number(((converted.dia1.score + converted.dia2.score) / 2).toFixed(2)) : 0;
     el.formTotal.textContent = `Media ${total}/100 | D1 ${formatConvertedDay(converted.dia1)} | D2 ${formatConvertedDay(converted.dia2)}`;
     return;
   }
