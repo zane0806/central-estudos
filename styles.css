@@ -345,6 +345,13 @@ button:disabled {
   align-items: end;
 }
 
+.score-fields {
+  display: grid;
+  grid-column: span 4;
+  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+  gap: 12px;
+}
+
 .exam-form label {
   display: grid;
   gap: 7px;
@@ -555,7 +562,7 @@ canvas {
 
 table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1060px;
   border-collapse: collapse;
 }
 
@@ -639,6 +646,10 @@ td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .score-fields {
+    grid-column: span 2;
+  }
+
   .exam-form__wide {
     grid-column: span 2;
   }
@@ -693,6 +704,11 @@ td {
   }
 
   .exam-form {
+    grid-template-columns: 1fr;
+  }
+
+  .score-fields {
+    grid-column: span 1;
     grid-template-columns: 1fr;
   }
 

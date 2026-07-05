@@ -1,9 +1,23 @@
 const LEGACY_STORAGE_KEY = "central-estudos.exams.v2";
-const STORAGE_PREFIX = "central-estudos.board.v1";
+const STORAGE_PREFIX = "central-estudos.board.v2";
+const PREVIOUS_STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const TARGET_RATE = 0.92;
 
 document.querySelector(".summary-grid")?.remove();
+
+const colors = {
+  green: "#1f8a70",
+  blue: "#3772ff",
+  coral: "#df6b57",
+  gold: "#d09b2c",
+  violet: "#7d5fff",
+  teal: "#0f9aa7",
+  pink: "#c95f8c",
+  slate: "#63707a",
+  olive: "#708238",
+  red: "#b84a42"
+};
 
 const seedExams = [
   { prova: "ENEM 2019", humanas: 41, linguagens: 34, matematica: 36, natureza: 34, total: 145, obs: "" },
@@ -29,10 +43,10 @@ const boards = [
     placeholder: "Ex: ENEM 2025 PPL",
     note: "prova inteira",
     sections: [
-      { key: "humanas", label: "Humanas", max: 45, color: "#1f8a70" },
-      { key: "linguagens", label: "Linguagens", max: 45, color: "#3772ff" },
-      { key: "matematica", label: "Matematica", max: 45, color: "#df6b57" },
-      { key: "natureza", label: "Natureza", max: 45, color: "#d09b2c" }
+      { key: "humanas", label: "Humanas", max: 45, color: colors.green },
+      { key: "linguagens", label: "Linguagens", max: 45, color: colors.blue },
+      { key: "matematica", label: "Matematica", max: 45, color: colors.coral },
+      { key: "natureza", label: "Natureza", max: 45, color: colors.gold }
     ]
   },
   {
@@ -40,26 +54,36 @@ const boards = [
     label: "UNESP",
     totalMax: 90,
     seed: [],
-    placeholder: "Ex: UNESP 2025 - 1a fase",
-    note: "1a fase: Conhecimentos Gerais",
+    placeholder: "Ex: UNESP 2026 - 1a fase",
+    note: "1a fase: 90 objetivas; distribuicao por disciplina para controle pessoal",
     sections: [
-      { key: "humanas", label: "Humanas", max: 30, color: "#1f8a70" },
-      { key: "linguagens", label: "Linguagens", max: 30, color: "#3772ff" },
-      { key: "matematica", label: "Nat. + Mat.", max: 30, color: "#df6b57" }
+      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
+      { key: "literatura", label: "Literatura", max: 8, color: colors.violet },
+      { key: "artes", label: "Artes", max: 2, color: colors.pink },
+      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
+      { key: "historia", label: "Historia", max: 8, color: colors.green },
+      { key: "geografia", label: "Geografia", max: 8, color: colors.olive },
+      { key: "filosofia_sociologia", label: "Filo/Socio", max: 4, color: colors.slate },
+      { key: "biologia", label: "Biologia", max: 10, color: colors.gold },
+      { key: "quimica", label: "Quimica", max: 10, color: colors.red },
+      { key: "fisica", label: "Fisica", max: 10, color: colors.coral },
+      { key: "matematica", label: "Matematica", max: 10, color: colors.blue }
     ]
   },
   {
     id: "famema",
     label: "FAMEMA",
-    totalMax: 48,
+    totalMax: 40,
     seed: [],
-    placeholder: "Ex: FAMEMA 2026",
-    note: "fase unica sem redacao: 8 discursivas + 40 objetivas",
+    placeholder: "Ex: FAMEMA 2026 - objetiva",
+    note: "Prova II objetiva; discursivas de quimica/biologia ficam fora deste total",
     sections: [
-      { key: "humanas", label: "Humanas", max: 10, color: "#1f8a70" },
-      { key: "linguagens", label: "Linguagens", max: 15, color: "#3772ff" },
-      { key: "matematica", label: "Mat. + Fis.", max: 15, color: "#df6b57" },
-      { key: "natureza", label: "Bio/Qui disc.", max: 8, color: "#d09b2c" }
+      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
+      { key: "matematica", label: "Matematica", max: 10, color: colors.coral },
+      { key: "geografia", label: "Geografia", max: 5, color: colors.olive },
+      { key: "historia", label: "Historia", max: 5, color: colors.green },
+      { key: "ingles", label: "Ingles", max: 5, color: colors.teal },
+      { key: "fisica", label: "Fisica", max: 5, color: colors.gold }
     ]
   },
   {
@@ -68,24 +92,32 @@ const boards = [
     totalMax: 80,
     seed: [],
     placeholder: "Ex: FAMERP 2026 - Conhecimentos Gerais",
-    note: "Conhecimentos Gerais",
+    note: "Conhecimentos Gerais: 80 objetivas, 10 por disciplina",
     sections: [
-      { key: "humanas", label: "Humanas", max: 20, color: "#1f8a70" },
-      { key: "linguagens", label: "Linguagens", max: 20, color: "#3772ff" },
-      { key: "matematica", label: "Mat. + Fis.", max: 20, color: "#df6b57" },
-      { key: "natureza", label: "Bio + Qui.", max: 20, color: "#d09b2c" }
+      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
+      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
+      { key: "historia", label: "Historia", max: 10, color: colors.green },
+      { key: "geografia", label: "Geografia", max: 10, color: colors.olive },
+      { key: "biologia", label: "Biologia", max: 10, color: colors.gold },
+      { key: "quimica", label: "Quimica", max: 10, color: colors.red },
+      { key: "fisica", label: "Fisica", max: 10, color: colors.coral },
+      { key: "matematica", label: "Matematica", max: 10, color: colors.blue }
     ]
   },
   {
     id: "unifesp",
     label: "UNIFESP",
-    totalMax: 155,
+    totalMax: 45,
     seed: [],
-    placeholder: "Ex: UNIFESP 2026 - provas complementares",
-    note: "provas complementares sem ENEM",
+    placeholder: "Ex: UNIFESP 2026 - complementares",
+    note: "Provas complementares sem redacao: 25 objetivas + 20 especificas",
     sections: [
-      { key: "linguagens", label: "Ling. + Redacao", max: 75, color: "#3772ff" },
-      { key: "natureza", label: "Especificas", max: 80, color: "#d09b2c" }
+      { key: "portugues", label: "Portugues", max: 15, color: colors.blue },
+      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
+      { key: "biologia", label: "Biologia", max: 5, color: colors.gold },
+      { key: "quimica", label: "Quimica", max: 5, color: colors.red },
+      { key: "fisica", label: "Fisica", max: 5, color: colors.coral },
+      { key: "matematica", label: "Matematica", max: 5, color: colors.blue }
     ]
   }
 ];
@@ -102,13 +134,10 @@ const el = {
   table: document.querySelector("#exam-table"),
   tableHead: document.querySelector("thead tr"),
   form: document.querySelector("#exam-form"),
+  scoreFields: document.querySelector("#score-fields"),
   formTitle: document.querySelector("#entry-title"),
   id: document.querySelector("#exam-id"),
   prova: document.querySelector("#exam-name"),
-  humanas: document.querySelector("#score-humanas"),
-  linguagens: document.querySelector("#score-linguagens"),
-  matematica: document.querySelector("#score-matematica"),
-  natureza: document.querySelector("#score-natureza"),
   obs: document.querySelector("#exam-notes"),
   formTotal: document.querySelector("#form-total"),
   saveExam: document.querySelector("#save-exam"),
@@ -117,13 +146,7 @@ const el = {
   importData: document.querySelector("#import-data"),
   importFile: document.querySelector("#import-file"),
   resetData: document.querySelector("#reset-data"),
-  boardTabs: [...document.querySelectorAll("[data-board]")],
-  labels: {
-    humanas: document.querySelector("#label-humanas"),
-    linguagens: document.querySelector("#label-linguagens"),
-    matematica: document.querySelector("#label-matematica"),
-    natureza: document.querySelector("#label-natureza")
-  }
+  boardTabs: [...document.querySelectorAll("[data-board]")]
 };
 
 let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
@@ -135,43 +158,48 @@ function boardById(id) {
   return boards.find((board) => board.id === id);
 }
 
-function storageKey(board) {
-  return `${STORAGE_PREFIX}.${board.id}`;
+function storageKey(board, prefix = STORAGE_PREFIX) {
+  return `${prefix}.${board.id}`;
 }
 
 function targetTotal(board = activeBoard) {
   return Math.ceil(board.totalMax * TARGET_RATE);
 }
 
-function scoreKeys() {
-  return ["humanas", "linguagens", "matematica", "natureza"];
-}
-
-function sectionByKey(board, key) {
-  return board.sections.find((section) => section.key === key);
-}
-
-function withId(exam) {
-  return {
-    id: exam.id || crypto.randomUUID(),
-    prova: String(exam.prova || "").trim(),
-    humanas: nullableScore(exam.humanas),
-    linguagens: nullableScore(exam.linguagens),
-    matematica: nullableScore(exam.matematica),
-    natureza: nullableScore(exam.natureza),
-    total: nullableScore(exam.total),
-    obs: String(exam.obs || "").trim()
-  };
-}
-
-function cloneSeed(board) {
-  return board.seed.map((exam) => withId({ ...exam, id: crypto.randomUUID() }));
+function allSectionKeys() {
+  return [...new Set(boards.flatMap((board) => board.sections.map((section) => section.key)))];
 }
 
 function nullableScore(value) {
   if (value === null || value === undefined || value === "") return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function withId(exam) {
+  const scores = {};
+  const sourceScores = exam.scores && typeof exam.scores === "object" ? exam.scores : {};
+
+  allSectionKeys().forEach((key) => {
+    const value = nullableScore(sourceScores[key] ?? exam[key]);
+    if (value !== null) scores[key] = value;
+  });
+
+  return {
+    id: exam.id || crypto.randomUUID(),
+    prova: String(exam.prova || "").trim(),
+    scores,
+    total: nullableScore(exam.total),
+    obs: String(exam.obs || "").trim()
+  };
+}
+
+function getScore(exam, key) {
+  return nullableScore(exam.scores?.[key] ?? exam[key]);
+}
+
+function cloneSeed(board) {
+  return board.seed.map((exam) => withId({ ...exam, id: crypto.randomUUID() }));
 }
 
 function scoreFromInput(input) {
@@ -181,7 +209,7 @@ function scoreFromInput(input) {
 }
 
 function computeTotal(exam, board = activeBoard) {
-  const scores = board.sections.map((section) => exam[section.key]);
+  const scores = board.sections.map((section) => getScore(exam, section.key));
   if (scores.every((score) => score !== null)) {
     return scores.reduce((sum, score) => sum + score, 0);
   }
@@ -205,6 +233,13 @@ function readStoredArray(key) {
 function loadExams(board) {
   const stored = readStoredArray(storageKey(board));
   if (stored) return normalizeExams(stored, board);
+
+  const previous = readStoredArray(storageKey(board, PREVIOUS_STORAGE_PREFIX));
+  if (previous) {
+    const migrated = normalizeExams(previous, board);
+    localStorage.setItem(storageKey(board), JSON.stringify(migrated));
+    return migrated;
+  }
 
   if (board.id === "enem") {
     const legacy = readStoredArray(LEGACY_STORAGE_KEY);
@@ -394,7 +429,7 @@ function renderTable() {
       return `
         <tr>
           <td>${escapeHtml(exam.prova)}</td>
-          ${columns.map((section) => `<td>${formatNumber(exam[section.key])}</td>`).join("")}
+          ${columns.map((section) => `<td>${formatNumber(getScore(exam, section.key))}</td>`).join("")}
           <td>${exam.total}/${activeBoard.totalMax}</td>
           <td><span class="badge ${status.className}">${status.label}</span></td>
           <td>
@@ -410,7 +445,6 @@ function renderTable() {
 }
 
 function renderExamCarousel() {
-  const areas = activeBoard.sections;
   const visibleExams = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
 
   if (!visibleExams.length) {
@@ -421,9 +455,9 @@ function renderExamCarousel() {
   el.examCarousel.innerHTML = visibleExams
     .map((exam) => {
       const status = statusFor(exam.total);
-      const rows = areas
+      const rows = activeBoard.sections
         .map((section) => {
-          const value = exam[section.key];
+          const value = getScore(exam, section.key);
           const width = value === null ? 0 : Math.max(2, Math.min(100, (value / section.max) * 100));
           return `
             <div class="area-row">
@@ -492,27 +526,40 @@ function renderTargets() {
   `;
 }
 
+function renderScoreFields(exam = null) {
+  el.scoreFields.innerHTML = activeBoard.sections
+    .map((section) => {
+      const value = exam ? getScore(exam, section.key) : null;
+      return `
+        <label>
+          ${escapeHtml(section.label)}
+          <input
+            data-score-key="${section.key}"
+            name="${section.key}"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            max="${section.max}"
+            placeholder="0-${section.max}"
+            value="${value ?? ""}"
+            required
+          >
+        </label>
+      `;
+    })
+    .join("");
+
+  el.scoreFields.querySelectorAll("input[data-score-key]").forEach((input) => {
+    input.addEventListener("input", updateFormTotal);
+  });
+}
+
 function updateFormForBoard() {
   el.prova.placeholder = activeBoard.placeholder;
-  if (!el.id.value) el.formTitle.textContent = "Nova prova";
-
-  scoreKeys().forEach((key) => {
-    const input = el[key];
-    const label = input.closest("label");
-    const section = sectionByKey(activeBoard, key);
-
-    label.hidden = !section;
-    input.disabled = !section;
-    input.required = Boolean(section);
-    input.max = section ? String(section.max) : "0";
-    input.placeholder = section ? `0-${section.max}` : "";
-
-    if (section) {
-      el.labels[key].textContent = section.label;
-    } else {
-      input.value = "";
-    }
-  });
+  if (!el.id.value) {
+    el.formTitle.textContent = "Nova prova";
+    renderScoreFields();
+  }
 }
 
 function updateFormTotal() {
@@ -522,13 +569,15 @@ function updateFormTotal() {
 }
 
 function readForm() {
+  const scores = {};
+  el.scoreFields.querySelectorAll("input[data-score-key]").forEach((input) => {
+    scores[input.dataset.scoreKey] = scoreFromInput(input);
+  });
+
   return {
     id: el.id.value || crypto.randomUUID(),
     prova: el.prova.value.trim(),
-    humanas: scoreFromInput(el.humanas),
-    linguagens: scoreFromInput(el.linguagens),
-    matematica: scoreFromInput(el.matematica),
-    natureza: scoreFromInput(el.natureza),
+    scores,
     obs: el.obs.value.trim()
   };
 }
@@ -539,6 +588,7 @@ function resetForm() {
   el.formTitle.textContent = "Nova prova";
   el.saveExam.textContent = "Salvar prova";
   el.cancelEdit.hidden = true;
+  renderScoreFields();
   updateFormForBoard();
   updateFormTotal();
 }
@@ -546,11 +596,8 @@ function resetForm() {
 function fillForm(exam) {
   el.id.value = exam.id;
   el.prova.value = exam.prova;
-  el.humanas.value = exam.humanas ?? "";
-  el.linguagens.value = exam.linguagens ?? "";
-  el.matematica.value = exam.matematica ?? "";
-  el.natureza.value = exam.natureza ?? "";
   el.obs.value = exam.obs ?? "";
+  renderScoreFields(exam);
   el.formTitle.textContent = "Editar prova";
   el.saveExam.textContent = "Salvar alteracoes";
   el.cancelEdit.hidden = false;
@@ -565,6 +612,11 @@ function saveForm(event) {
 
   if (!draft.prova || total === null) {
     setStatus("Preencha nome e notas da prova.", true);
+    return;
+  }
+
+  if (total > activeBoard.totalMax) {
+    setStatus(`O total nao pode passar de ${activeBoard.totalMax}.`, true);
     return;
   }
 
@@ -698,10 +750,6 @@ el.resetData.addEventListener("click", resetData);
 
 el.boardTabs.forEach((tab) => {
   tab.addEventListener("click", () => switchBoard(tab.dataset.board));
-});
-
-[el.humanas, el.linguagens, el.matematica, el.natureza].forEach((input) => {
-  input.addEventListener("input", updateFormTotal);
 });
 
 window.addEventListener("resize", scheduleChartResize, { passive: true });
