@@ -175,7 +175,7 @@ function allSectionKeys() {
 
 function nullableScore(value) {
   if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(value);
+  const parsed = Number(String(value).trim().replace(",", "."));
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -643,11 +643,8 @@ function renderScoreFields(exam = null) {
           <input
             data-score-key="${section.key}"
             name="${section.key}"
-            type="number"
+            type="text"
             inputmode="decimal"
-            min="0"
-            max="${section.max}"
-            step="any"
             placeholder="0-${section.max}"
             value="${value ?? ""}"
             ${section.countsTowardTotal === false ? "" : "required"}
