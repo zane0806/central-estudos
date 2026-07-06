@@ -3,10 +3,11 @@ const STORAGE_PREFIX = "central-estudos.board.v2";
 const PREVIOUS_STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
+const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
 const TARGET_RATE = 0.92;
 
 const BOARD_SEED_VERSIONS = {
-  unesp: "drive-site2-2026-07-05"
+  unesp: "drive-site2-2026-07-05-errors-fixed"
 };
 
 document.querySelector(".summary-grid")?.remove();
@@ -42,19 +43,19 @@ const seedExams = [
 const unespSeedExams = [
   {
     prova: "UNESP 2026 - Simulado 1",
-    portugues: 3,
+    portugues: 7,
     literatura: 4,
-    artes: 0,
-    ingles: 2,
-    historia: 3,
-    geografia: 2,
-    filosofia_sociologia: 0,
-    biologia: 1,
-    quimica: 1,
-    fisica: 4,
-    matematica: 1,
-    total: 21,
-    obs: "Dados da foto do Drive. Esta prova estava anotada como acertos."
+    artes: 2,
+    ingles: 8,
+    historia: 7,
+    geografia: 8,
+    filosofia_sociologia: 10,
+    biologia: 7,
+    quimica: 6,
+    fisica: 3,
+    matematica: 7,
+    total: 69,
+    obs: "Convertido dos erros anotados na foto do Drive."
   },
   {
     prova: "UNESP 2025",
@@ -254,6 +255,10 @@ const el = {
   targetList: document.querySelector("#target-list"),
   progressChart: document.querySelector("#progress-chart"),
   examCarousel: document.querySelector("#exam-carousel"),
+  boardNoteText: document.querySelector("#board-note-text"),
+  saveBoardNote: document.querySelector("#save-board-note"),
+  clearBoardNote: document.querySelector("#clear-board-note"),
+  boardNotesCarousel: document.querySelector("#board-notes-carousel"),
   table: document.querySelector("#exam-table"),
   tableHead: document.querySelector("thead tr"),
   form: document.querySelector("#exam-form"),
@@ -274,6 +279,7 @@ const el = {
 
 let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
 let exams = loadExams(activeBoard);
+let boardNotes = loadBoardNotes(activeBoard);
 let chartFrame = 0;
 const chartWidths = new WeakMap();
 
@@ -287,6 +293,10 @@ function storageKey(board, prefix = STORAGE_PREFIX) {
 
 function seedVersionKey(board) {
   return `${SEED_VERSION_PREFIX}.${board.id}`;
+}
+
+function notesStorageKey(board) {
+  return `${NOTES_STORAGE_PREFIX}.${board.id}`;
 }
 
 function targetTotal(board = activeBoard) {
@@ -340,13 +350,21 @@ function mergeSeedUpdate(examsList, board) {
   }
 
   const existing = new Set(examsList.map(examSignature));
-  const additions = cloneSeed(board).filter((exam) => !existing.has(examSignature(exam)));
-  const merged = [...additions, ...examsList];
+  const additions = [];
+  const merged = examsList.map((exam) => {
+    const seedExam = cloneSeed(board).find((item) => examSignature(item) === examSignature(exam));
+    if (!seedExam) return exam;
+    return { ...seedExam, id: exam.id };
+  });
+
+  cloneSeed(board).forEach((exam) => {
+    if (!existing.has(examSignature(exam))) additions.push(exam);
+  });
+
+  const next = [...additions, ...merged];
   localStorage.setItem(seedVersionKey(board), seedVersion);
-  if (additions.length) {
-    localStorage.setItem(storageKey(board), JSON.stringify(merged));
-  }
-  return merged;
+  localStorage.setItem(storageKey(board), JSON.stringify(next));
+  return next;
 }
 
 function scoreFromInput(input) {
@@ -451,6 +469,22 @@ function loadExams(board) {
   return cloneSeed(board);
 }
 
+function loadBoardNotes(board) {
+  const stored = readStoredArray(notesStorageKey(board));
+  if (!stored) return [];
+  return stored
+    .filter((note) => note && typeof note.text === "string" && note.text.trim())
+    .map((note) => ({
+      id: note.id || crypto.randomUUID(),
+      text: note.text.trim(),
+      createdAt: note.createdAt || new Date().toISOString()
+    }));
+}
+
+function persistBoardNotes() {
+  localStorage.setItem(notesStorageKey(activeBoard), JSON.stringify(boardNotes));
+}
+
 function persist() {
   localStorage.setItem(storageKey(activeBoard), JSON.stringify(exams));
   localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
@@ -468,6 +502,12 @@ function updateStatusForBoard() {
 function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "--";
   return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
 function escapeHtml(value) {
@@ -707,6 +747,27 @@ function renderExamCarousel() {
     .join("");
 }
 
+function renderBoardNotes() {
+  if (!el.boardNotesCarousel) return;
+
+  if (!boardNotes.length) {
+    el.boardNotesCarousel.innerHTML = `<div class="notes-empty">Nenhuma observacao salva para ${escapeHtml(activeBoard.label)}.</div>`;
+    return;
+  }
+
+  el.boardNotesCarousel.innerHTML = boardNotes
+    .map((note) => `
+      <article class="note-card">
+        <div class="note-card__meta">
+          <span>${escapeHtml(activeBoard.label)} - ${escapeHtml(formatDate(note.createdAt))}</span>
+          <button class="button button--secondary table-action" type="button" data-note-action="delete" data-id="${note.id}">Excluir</button>
+        </div>
+        <p>${escapeHtml(note.text)}</p>
+      </article>
+    `)
+    .join("");
+}
+
 function renderSecondaryTotal(exam) {
   if (activeBoard.conversion === "unifesp-days") {
     const converted = computeUnifespConverted(exam);
@@ -736,6 +797,7 @@ function renderTargets() {
   if (el.goalTotal) el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
   if (el.goalMeterFill) el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
   el.chartGoalPill.textContent = `Meta ${target}`;
+  if (!el.targetList) return;
 
   if (activeBoard.conversion === "unifesp-days") {
     el.targetList.innerHTML = `
@@ -965,6 +1027,8 @@ function switchBoard(boardId) {
   if (!nextBoard || nextBoard.id === activeBoard.id) return;
   activeBoard = nextBoard;
   exams = loadExams(activeBoard);
+  boardNotes = loadBoardNotes(activeBoard);
+  if (el.boardNoteText) el.boardNoteText.value = "";
   localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
   resetForm();
   render();
@@ -977,6 +1041,7 @@ function render() {
   renderTargets();
   drawCharts(true);
   renderExamCarousel();
+  renderBoardNotes();
   renderTable();
 }
 
@@ -1002,9 +1067,46 @@ function scheduleChartResize() {
   });
 }
 
+function saveBoardNote() {
+  const text = el.boardNoteText?.value.trim();
+  if (!text) {
+    setStatus("Escreva uma observacao antes de salvar.", true);
+    return;
+  }
+
+  boardNotes = [
+    {
+      id: crypto.randomUUID(),
+      text,
+      createdAt: new Date().toISOString()
+    },
+    ...boardNotes
+  ];
+  persistBoardNotes();
+  el.boardNoteText.value = "";
+  renderBoardNotes();
+  setStatus(`${activeBoard.label}: observacao salva neste navegador`);
+}
+
+function clearBoardNote() {
+  if (el.boardNoteText) el.boardNoteText.value = "";
+}
+
+function handleBoardNotesClick(event) {
+  const button = event.target.closest("button[data-note-action]");
+  if (!button || button.dataset.noteAction !== "delete") return;
+  boardNotes = boardNotes.filter((note) => note.id !== button.dataset.id);
+  persistBoardNotes();
+  renderBoardNotes();
+  setStatus(`${activeBoard.label}: observacao excluida deste navegador`);
+}
+
 el.form.addEventListener("submit", saveForm);
 el.cancelEdit.addEventListener("click", resetForm);
 el.table.addEventListener("click", handleTableClick);
+el.saveBoardNote.addEventListener("click", saveBoardNote);
+el.clearBoardNote.addEventListener("click", clearBoardNote);
+el.boardNotesCarousel.addEventListener("click", handleBoardNotesClick);
 el.exportData.addEventListener("click", exportData);
 el.importData.addEventListener("click", () => el.importFile.click());
 el.importFile.addEventListener("change", () => importData(el.importFile.files?.[0]));

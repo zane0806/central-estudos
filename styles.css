@@ -281,6 +281,7 @@ button:disabled {
 .entry-section,
 .chart-card,
 .target-card,
+.notes-card,
 .table-section {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(14px);
@@ -323,6 +324,7 @@ button:disabled {
 .entry-section,
 .chart-card,
 .target-card,
+.notes-card,
 .table-section {
   padding: 20px;
 }
@@ -452,6 +454,10 @@ canvas {
   min-height: 420px;
 }
 
+.notes-card {
+  min-height: 420px;
+}
+
 .exam-carousel {
   display: grid;
   gap: 12px;
@@ -557,6 +563,101 @@ canvas {
   display: block;
   margin-top: 8px;
   font-size: 1.55rem;
+}
+
+.board-notes {
+  display: grid;
+  gap: 12px;
+}
+
+.board-notes__editor {
+  display: grid;
+  gap: 8px;
+}
+
+.board-notes__editor span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.board-notes textarea {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.board-notes textarea:focus {
+  border-color: var(--green);
+  outline: 3px solid rgba(31, 138, 112, 0.16);
+}
+
+.board-notes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notes-carousel {
+  display: grid;
+  gap: 12px;
+  max-height: 270px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-right: 6px;
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.note-card {
+  display: grid;
+  gap: 10px;
+  min-height: 124px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfc;
+  scroll-snap-align: start;
+}
+
+.note-card p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.note-card__meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.notes-empty {
+  display: grid;
+  min-height: 124px;
+  place-items: center;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
 }
 
 .table-wrap {
@@ -674,6 +775,7 @@ td {
   .entry-section,
   .chart-card,
   .target-card,
+  .notes-card,
   .table-section {
     border-radius: 8px;
   }
@@ -725,6 +827,14 @@ td {
 
   .exam-carousel {
     max-height: 470px;
+  }
+
+  .notes-carousel {
+    max-height: 340px;
+  }
+
+  .board-notes__actions .button {
+    width: 100%;
   }
 
   .area-row {

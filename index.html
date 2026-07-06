@@ -11,7 +11,7 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>Zan. Vest</title>
-    <link rel="stylesheet" href="./styles.css?v=20260704-4">
+    <link rel="stylesheet" href="./styles.css?v=20260705-2">
   </head>
   <body>
     <main class="shell">
@@ -94,14 +94,25 @@
           <div class="exam-carousel" id="exam-carousel" aria-label="Graficos por prova"></div>
         </article>
 
-        <article class="target-card">
+        <article class="notes-card">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">rota</p>
-              <h2>Metas por bloco</h2>
+              <p class="eyebrow">caderno</p>
+              <h2>Observacoes gerais</h2>
             </div>
+            <span class="pill">rolagem</span>
           </div>
-          <div class="target-list" id="target-list"></div>
+          <div class="board-notes">
+            <label class="board-notes__editor">
+              <span>Nova observacao</span>
+              <textarea id="board-note-text" placeholder="Anote estrategia, assuntos para revisar ou qualquer observacao desse vestibular."></textarea>
+            </label>
+            <div class="board-notes__actions">
+              <button class="button button--primary-dark" type="button" id="save-board-note">Salvar observacao</button>
+              <button class="button button--secondary" type="button" id="clear-board-note">Limpar texto</button>
+            </div>
+            <div class="notes-carousel" id="board-notes-carousel" aria-label="Observacoes salvas"></div>
+          </div>
         </article>
       </section>
 
@@ -132,6 +143,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260704-4"></script>
+    <script src="./app.js?v=20260705-2"></script>
   </body>
 </html>
