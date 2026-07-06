@@ -558,36 +558,53 @@ button:disabled {
   white-space: nowrap;
 }
 
-.map-mode-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  border: 1px solid rgba(184, 74, 66, 0.34);
-  border-radius: 999px;
-  padding: 0 14px;
-  background: rgba(184, 74, 66, 0.14);
-  color: #a13d2d;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
+.map-mode-control {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}
+
+.map-mode-control > span {
+  color: var(--muted);
+  font-size: 0.68rem;
   font-weight: 850;
-  white-space: nowrap;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.map-mode-toggle {
+  position: relative;
+  width: 76px;
+  height: 36px;
+  border: 1px solid rgba(184, 74, 66, 0.55);
+  border-radius: 999px;
+  padding: 0;
+  background: linear-gradient(180deg, #ff2f2f, #d20f0f);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.28), inset 0 -3px 7px rgba(61, 0, 0, 0.3);
+  cursor: pointer;
   touch-action: manipulation;
 }
 
+.map-mode-toggle span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff, #d9ddda);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.32);
+  transition: transform 0.18s ease;
+}
+
 .map-mode-toggle.is-active {
-  border-color: rgba(31, 138, 112, 0.36);
-  background: rgba(31, 138, 112, 0.14);
-  color: #14634f;
+  border-color: rgba(31, 138, 112, 0.6);
+  background: linear-gradient(180deg, #18df3d, #08a923);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.28), inset 0 -3px 7px rgba(0, 61, 18, 0.3);
 }
 
-body[data-theme="dark"] .map-mode-toggle {
-  color: #ffb5a9;
-}
-
-body[data-theme="dark"] .map-mode-toggle.is-active {
-  color: #8ee1cb;
+.map-mode-toggle.is-active span {
+  transform: translateX(40px);
 }
 
 canvas {

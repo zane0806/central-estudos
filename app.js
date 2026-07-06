@@ -869,11 +869,21 @@ function renderExamCarousel() {
   el.examCarousel.innerHTML = visibleExams
     .map((exam) => {
       const status = statusFor(exam.total);
+      const sectionRows = activeBoard.sections.map((section) => {
+        const score = getScore(exam, section.key);
+        const value = score === null ? null : mapMode === "errors" ? Math.max(0, section.max - score) : score;
+        return { section, value };
+      });
+      const maxError = mapMode === "errors"
+        ? Math.max(0, ...sectionRows.map((row) => row.value ?? 0))
+        : null;
       const rows = activeBoard.sections
         .map((section) => {
-          const score = getScore(exam, section.key);
-          const value = score === null ? null : mapMode === "errors" ? Math.max(0, section.max - score) : score;
-          const width = value === null ? 0 : Math.max(2, Math.min(100, (value / section.max) * 100));
+          const row = sectionRows.find((item) => item.section.key === section.key);
+          const value = row?.value ?? null;
+          const width = mapMode === "errors"
+            ? value && maxError ? Math.min(100, (value / maxError) * 100) : 0
+            : value === null ? 0 : Math.max(2, Math.min(100, (value / section.max) * 100));
           return `
             <div class="area-row">
               <span>${escapeHtml(section.label)}</span>
@@ -910,9 +920,9 @@ function renderExamCarousel() {
 function updateMapModeToggle() {
   if (!el.mapModeToggle) return;
   const isScoreMode = mapMode === "scores";
-  el.mapModeToggle.textContent = isScoreMode ? "Ativado" : "Desativado";
   el.mapModeToggle.classList.toggle("is-active", isScoreMode);
   el.mapModeToggle.setAttribute("aria-pressed", String(isScoreMode));
+  el.mapModeToggle.setAttribute("aria-label", isScoreMode ? "Mostrar erros por disciplina" : "Mostrar acertos por disciplina");
   el.mapModeToggle.setAttribute(
     "title",
     isScoreMode ? "Mostrando acertos por disciplina" : "Mostrando erros por disciplina"
