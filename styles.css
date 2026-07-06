@@ -558,6 +558,38 @@ button:disabled {
   white-space: nowrap;
 }
 
+.map-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid rgba(184, 74, 66, 0.34);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: rgba(184, 74, 66, 0.14);
+  color: #a13d2d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.map-mode-toggle.is-active {
+  border-color: rgba(31, 138, 112, 0.36);
+  background: rgba(31, 138, 112, 0.14);
+  color: #14634f;
+}
+
+body[data-theme="dark"] .map-mode-toggle {
+  color: #ffb5a9;
+}
+
+body[data-theme="dark"] .map-mode-toggle.is-active {
+  color: #8ee1cb;
+}
+
 canvas {
   display: block;
   width: 100%;

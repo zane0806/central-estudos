@@ -5,6 +5,7 @@ const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
 const THEME_KEY = "central-estudos.theme.v1";
+const MAP_MODE_KEY = "central-estudos.map-mode.v1";
 const SUPABASE_CONFIG = window.ZAN_SUPABASE_CONFIG || {};
 const TARGET_RATE = 0.92;
 
@@ -139,6 +140,7 @@ const el = {
   targetList: document.querySelector("#target-list"),
   progressChart: document.querySelector("#progress-chart"),
   examCarousel: document.querySelector("#exam-carousel"),
+  mapModeToggle: document.querySelector("#map-mode-toggle"),
   boardNoteText: document.querySelector("#board-note-text"),
   saveBoardNote: document.querySelector("#save-board-note"),
   clearBoardNote: document.querySelector("#clear-board-note"),
@@ -165,6 +167,7 @@ let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0]
 let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
 let activeTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+let mapMode = localStorage.getItem(MAP_MODE_KEY) === "errors" ? "errors" : "scores";
 let supabaseClient = null;
 let currentUser = null;
 let chartFrame = 0;
@@ -655,6 +658,11 @@ function formatNumber(value) {
   return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }
 
+function formatMapValue(value, section) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "--";
+  return mapMode === "errors" ? formatNumber(value) : `${formatNumber(value)}/${section.max}`;
+}
+
 function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -863,7 +871,8 @@ function renderExamCarousel() {
       const status = statusFor(exam.total);
       const rows = activeBoard.sections
         .map((section) => {
-          const value = getScore(exam, section.key);
+          const score = getScore(exam, section.key);
+          const value = score === null ? null : mapMode === "errors" ? Math.max(0, section.max - score) : score;
           const width = value === null ? 0 : Math.max(2, Math.min(100, (value / section.max) * 100));
           return `
             <div class="area-row">
@@ -871,7 +880,7 @@ function renderExamCarousel() {
               <div class="area-track" aria-hidden="true">
                 <div class="area-fill" style="width: ${width}%; --area-color: ${section.color};"></div>
               </div>
-              <strong>${formatNumber(value)}/${section.max}</strong>
+              <strong>${formatMapValue(value, section)}</strong>
             </div>
           `;
         })
@@ -896,6 +905,25 @@ function renderExamCarousel() {
       `;
     })
     .join("");
+}
+
+function updateMapModeToggle() {
+  if (!el.mapModeToggle) return;
+  const isScoreMode = mapMode === "scores";
+  el.mapModeToggle.textContent = isScoreMode ? "Ativado" : "Desativado";
+  el.mapModeToggle.classList.toggle("is-active", isScoreMode);
+  el.mapModeToggle.setAttribute("aria-pressed", String(isScoreMode));
+  el.mapModeToggle.setAttribute(
+    "title",
+    isScoreMode ? "Mostrando acertos por disciplina" : "Mostrando erros por disciplina"
+  );
+}
+
+function toggleMapMode() {
+  mapMode = mapMode === "scores" ? "errors" : "scores";
+  localStorage.setItem(MAP_MODE_KEY, mapMode);
+  updateMapModeToggle();
+  renderExamCarousel();
 }
 
 function renderBoardNotes() {
@@ -1213,6 +1241,7 @@ async function switchBoard(boardId) {
 
 function render() {
   updateBoardTabs();
+  updateMapModeToggle();
   updateFormForBoard();
   renderTargets();
   drawCharts(true);
@@ -1350,6 +1379,7 @@ el.form.addEventListener("submit", saveForm);
 el.cancelEdit.addEventListener("click", resetForm);
 el.table.addEventListener("click", handleTableClick);
 el.themeToggle.addEventListener("click", toggleTheme);
+el.mapModeToggle.addEventListener("click", toggleMapMode);
 el.authForm.addEventListener("submit", handleAuthSignIn);
 el.authSignup.addEventListener("click", handleAuthSignUp);
 el.authSignout.addEventListener("click", handleAuthSignOut);
