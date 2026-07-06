@@ -27,7 +27,7 @@ jobs:
       - name: Prepare static files
         run: |
           mkdir dist
-          cp index.html app.js styles.css README.md .nojekyll dist/
+          cp index.html app.js styles.css README.md supabase-config.js supabase-schema.sql .nojekyll dist/
           cp -R assets dist/assets
 
       - name: Upload artifact
