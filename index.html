@@ -11,7 +11,7 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>Zan. Vest</title>
-    <link rel="stylesheet" href="./styles.css?v=20260705-4">
+    <link rel="stylesheet" href="./styles.css?v=20260706-1">
   </head>
   <body>
     <main class="shell">
@@ -36,6 +36,37 @@
         <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
         <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
         <button class="board-tab" type="button" data-board="unifesp">UNIFESP</button>
+      </section>
+
+      <section class="auth-panel" id="auth-panel" aria-labelledby="auth-title" hidden>
+        <div>
+          <p class="eyebrow">conta online</p>
+          <h2 id="auth-title">Sincronizacao</h2>
+          <p class="auth-status" id="auth-status">Dados locais neste navegador.</p>
+        </div>
+
+        <form class="auth-form" id="auth-form">
+          <label>
+            Email
+            <input id="auth-email" name="email" type="email" autocomplete="email" placeholder="seu@email.com">
+          </label>
+          <label>
+            Senha
+            <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Minimo 6 caracteres">
+          </label>
+          <div class="auth-actions">
+            <button class="button button--primary-dark" type="submit" id="auth-signin">Entrar</button>
+            <button class="button button--secondary" type="button" id="auth-signup">Criar conta</button>
+          </div>
+        </form>
+
+        <div class="auth-session" id="auth-session" hidden>
+          <strong id="auth-user-email"></strong>
+          <div class="auth-actions">
+            <button class="button button--primary-dark" type="button" id="sync-now">Sincronizar</button>
+            <button class="button button--secondary" type="button" id="auth-signout">Sair</button>
+          </div>
+        </div>
       </section>
 
       <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
@@ -146,6 +177,8 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260705-4"></script>
+    <script src="./supabase-config.js?v=20260706-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./app.js?v=20260706-1"></script>
   </body>
 </html>

@@ -5,6 +5,7 @@ const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
 const THEME_KEY = "central-estudos.theme.v1";
+const SUPABASE_CONFIG = window.ZAN_SUPABASE_CONFIG || {};
 const TARGET_RATE = 0.92;
 
 const BOARD_SEED_VERSIONS = {
@@ -26,142 +27,12 @@ const colors = {
   red: "#b84a42"
 };
 
-const seedExams = [
-  { prova: "ENEM 2019", humanas: 41, linguagens: 34, matematica: 36, natureza: 34, total: 145, obs: "" },
-  { prova: "ENEM 2024 PPL", humanas: 38, linguagens: 34, matematica: 38, natureza: 35, total: 145, obs: "" },
-  { prova: "ENEM 2023 PPL", humanas: 43, linguagens: 39, matematica: 35, natureza: 37, total: 154, obs: "" },
-  { prova: "ENEM 2018", humanas: null, linguagens: null, matematica: 39, natureza: 34, total: 149, obs: "" },
-  { prova: "ENEM 2022 PPL", humanas: null, linguagens: null, matematica: 37, natureza: 36, total: 149, obs: "" },
-  { prova: "ENEM 2022", humanas: 38, linguagens: 34, matematica: 37, natureza: 34, total: 143, obs: "" },
-  { prova: "ENEM 2021", humanas: 40, linguagens: 36, matematica: 42, natureza: 36, total: 154, obs: "feitas em 2026" },
-  { prova: "ENEM 2024", humanas: 44, linguagens: 40, matematica: 41, natureza: 42, total: 167, obs: "" },
-  { prova: "ENEM 2019 PPL", humanas: 42, linguagens: 40, matematica: 42, natureza: 40, total: 164, obs: "" },
-  { prova: "ENEM 2020 PPL", humanas: null, linguagens: null, matematica: 38, natureza: 43, total: 81, obs: "" },
-  { prova: "ENEM 2021 PPL", humanas: null, linguagens: null, matematica: 42, natureza: 42, total: 84, obs: "" },
-  { prova: "ENEM S. Poli", humanas: 37, linguagens: 39, matematica: 41, natureza: 38, total: 155, obs: "" }
-];
-
-const unespSeedExams = [
-  {
-    prova: "UNESP 2026 - Simulado 1",
-    portugues: 7,
-    literatura: 4,
-    artes: 2,
-    ingles: 8,
-    historia: 7,
-    geografia: 8,
-    filosofia_sociologia: 10,
-    biologia: 7,
-    quimica: 6,
-    fisica: 3,
-    matematica: 7,
-    total: 69,
-    obs: "Convertido dos erros anotados na foto do Drive."
-  },
-  {
-    prova: "UNESP 2025",
-    portugues: 6,
-    literatura: 8,
-    artes: 2,
-    ingles: 7,
-    historia: 9,
-    geografia: 9,
-    filosofia_sociologia: 8,
-    biologia: 8,
-    quimica: 6,
-    fisica: 5,
-    matematica: 5,
-    total: 73,
-    obs: "Convertido dos erros anotados na foto do Drive."
-  },
-  {
-    prova: "UNESP 2024",
-    portugues: 9,
-    literatura: 8,
-    artes: 2,
-    ingles: 9,
-    historia: 9,
-    geografia: 8,
-    filosofia_sociologia: 9,
-    biologia: 5,
-    quimica: 5,
-    fisica: 6,
-    matematica: 6,
-    total: 76,
-    obs: "Convertido dos erros anotados na foto do Drive. 6 duvidas."
-  },
-  {
-    prova: "UNESP 2023",
-    portugues: 9,
-    literatura: 8,
-    artes: 1,
-    ingles: 8,
-    historia: 9,
-    geografia: 7,
-    filosofia_sociologia: 9,
-    biologia: 5,
-    quimica: 6,
-    fisica: 7,
-    matematica: 8,
-    total: 77,
-    obs: "Convertido dos erros anotados na foto do Drive."
-  },
-  {
-    prova: "UNESP 2022 - Bio",
-    portugues: 8,
-    literatura: 8,
-    artes: 2,
-    ingles: 10,
-    historia: 8,
-    geografia: 8,
-    filosofia_sociologia: 9,
-    biologia: 8,
-    quimica: 7,
-    fisica: 5,
-    matematica: 7,
-    total: 80,
-    obs: "Convertido dos erros anotados na foto do Drive."
-  },
-  {
-    prova: "UNESP 2022 - H/Ex",
-    portugues: 9,
-    literatura: 8,
-    artes: 1,
-    ingles: 8,
-    historia: 8,
-    geografia: 7,
-    filosofia_sociologia: 9,
-    biologia: 7,
-    quimica: 6,
-    fisica: 6,
-    matematica: 6,
-    total: 75,
-    obs: "Convertido dos erros anotados na foto do Drive."
-  },
-  {
-    prova: "UNESP 2021",
-    portugues: 6,
-    literatura: 8,
-    artes: 2,
-    ingles: 8,
-    historia: 8,
-    geografia: 10,
-    filosofia_sociologia: 9,
-    biologia: 5,
-    quimica: 7,
-    fisica: 7,
-    matematica: 7,
-    total: 77,
-    obs: "Convertido dos 13 erros anotados na foto do Drive."
-  }
-];
-
 const boards = [
   {
     id: "enem",
     label: "ENEM",
     totalMax: 180,
-    seed: seedExams,
+    seed: [],
     placeholder: "Ex: ENEM 2025 PPL",
     note: "prova inteira",
     sections: [
@@ -175,7 +46,7 @@ const boards = [
     id: "unesp",
     label: "UNESP",
     totalMax: 90,
-    seed: unespSeedExams,
+    seed: [],
     placeholder: "Ex: UNESP 2026 - 1a fase",
     note: "1a fase: 90 objetivas; distribuicao por disciplina para controle pessoal",
     sections: [
@@ -251,6 +122,16 @@ const el = {
   status: document.querySelector("#data-status"),
   themeToggle: document.querySelector("#theme-toggle"),
   themeColorMeta: document.querySelector("#theme-color-meta"),
+  authPanel: document.querySelector("#auth-panel"),
+  authForm: document.querySelector("#auth-form"),
+  authStatus: document.querySelector("#auth-status"),
+  authEmail: document.querySelector("#auth-email"),
+  authPassword: document.querySelector("#auth-password"),
+  authSignup: document.querySelector("#auth-signup"),
+  authSession: document.querySelector("#auth-session"),
+  authUserEmail: document.querySelector("#auth-user-email"),
+  authSignout: document.querySelector("#auth-signout"),
+  syncNow: document.querySelector("#sync-now"),
   goalPercent: document.querySelector("#goal-percent"),
   goalTotal: document.querySelector("#goal-total"),
   goalMeterFill: document.querySelector("#goal-meter-fill"),
@@ -284,6 +165,8 @@ let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0]
 let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
 let activeTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+let supabaseClient = null;
+let currentUser = null;
 let chartFrame = 0;
 const chartWidths = new WeakMap();
 
@@ -500,7 +383,248 @@ function setStatus(message, isError = false) {
 }
 
 function updateStatusForBoard() {
-  setStatus(`${activeBoard.label}: dados salvos neste navegador`);
+  setStatus(currentUser ? `${activeBoard.label}: sincronizado com sua conta` : `${activeBoard.label}: dados salvos neste navegador`);
+}
+
+function isSupabaseConfigured() {
+  return Boolean(
+    SUPABASE_CONFIG.url &&
+    SUPABASE_CONFIG.anonKey &&
+    window.supabase?.createClient
+  );
+}
+
+function isOnlineMode() {
+  return Boolean(supabaseClient && currentUser);
+}
+
+function updateAuthUi() {
+  if (!el.authPanel) return;
+  if (!isSupabaseConfigured()) {
+    el.authPanel.hidden = true;
+    return;
+  }
+
+  el.authPanel.hidden = false;
+  const signedIn = isOnlineMode();
+  el.authForm.hidden = signedIn;
+  el.authSession.hidden = !signedIn;
+  el.authStatus.textContent = signedIn
+    ? "Sessao ativa neste navegador. Os dados sincronizam com sua conta."
+    : "Entre para sincronizar os dados entre celular e computador.";
+  if (el.authUserEmail) el.authUserEmail.textContent = currentUser?.email || "";
+}
+
+function setAuthBusy(isBusy) {
+  [el.authSignup, el.authSignout, el.syncNow, el.authForm?.querySelector("button[type='submit']")]
+    .filter(Boolean)
+    .forEach((button) => {
+      button.disabled = isBusy;
+    });
+}
+
+async function initSupabase() {
+  if (!isSupabaseConfigured()) {
+    updateAuthUi();
+    return;
+  }
+
+  supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  });
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setStatus("Nao foi possivel carregar a sessao online.", true);
+  }
+  currentUser = data?.session?.user || null;
+  updateAuthUi();
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    updateAuthUi();
+    if (currentUser) {
+      await syncAllBoards({ silent: true });
+      await loadActiveBoardData();
+      setStatus("Conta conectada. Dados sincronizados.");
+    } else {
+      exams = loadExams(activeBoard);
+      boardNotes = loadBoardNotes(activeBoard);
+      render();
+      updateStatusForBoard();
+    }
+  });
+
+  if (currentUser) {
+    await syncAllBoards({ silent: true });
+    await loadActiveBoardData();
+  }
+}
+
+function rowToExam(row) {
+  return withId({
+    id: row.id,
+    prova: row.prova,
+    scores: row.scores || {},
+    total: row.total,
+    obs: row.obs || ""
+  });
+}
+
+function examToRow(exam, board, position) {
+  return {
+    id: exam.id,
+    user_id: currentUser.id,
+    board_id: board.id,
+    prova: exam.prova,
+    scores: exam.scores || {},
+    total: computeTotal(exam, board),
+    obs: exam.obs || "",
+    position
+  };
+}
+
+function rowToNote(row) {
+  return {
+    id: row.id,
+    text: String(row.text || "").trim(),
+    createdAt: row.created_at || row.createdAt || new Date().toISOString()
+  };
+}
+
+function noteToRow(note, board) {
+  return {
+    id: note.id,
+    user_id: currentUser.id,
+    board_id: board.id,
+    text: note.text,
+    created_at: note.createdAt || new Date().toISOString()
+  };
+}
+
+function mergeExamsForSync(remoteExams, localExams) {
+  const bySignature = new Set(remoteExams.map(examSignature));
+  const additions = localExams.filter((exam) => !bySignature.has(examSignature(exam)));
+  return [...remoteExams, ...additions];
+}
+
+function mergeNotesForSync(remoteNotes, localNotes) {
+  const byId = new Set(remoteNotes.map((note) => note.id));
+  const byText = new Set(remoteNotes.map((note) => `${note.text}::${note.createdAt}`));
+  const additions = localNotes.filter((note) => !byId.has(note.id) && !byText.has(`${note.text}::${note.createdAt}`));
+  return [...remoteNotes, ...additions];
+}
+
+async function fetchRemoteBoard(board) {
+  const [examResult, noteResult] = await Promise.all([
+    supabaseClient
+      .from("exam_records")
+      .select("id, board_id, prova, scores, total, obs, position, created_at, updated_at")
+      .eq("board_id", board.id)
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabaseClient
+      .from("board_note_records")
+      .select("id, board_id, text, created_at, updated_at")
+      .eq("board_id", board.id)
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (examResult.error) throw examResult.error;
+  if (noteResult.error) throw noteResult.error;
+
+  return {
+    exams: normalizeExams((examResult.data || []).map(rowToExam), board),
+    notes: (noteResult.data || []).map(rowToNote).filter((note) => note.text)
+  };
+}
+
+async function saveRemoteBoard(board, nextExams, nextNotes) {
+  const examRows = nextExams.map((exam, index) => examToRow(exam, board, index));
+  const noteRows = nextNotes.map((note) => noteToRow(note, board));
+
+  if (examRows.length) {
+    const { error } = await supabaseClient.from("exam_records").upsert(examRows, { onConflict: "id" });
+    if (error) throw error;
+  }
+
+  if (noteRows.length) {
+    const { error } = await supabaseClient.from("board_note_records").upsert(noteRows, { onConflict: "id" });
+    if (error) throw error;
+  }
+}
+
+async function replaceRemoteBoard(board, nextExams, nextNotes) {
+  const [examDelete, noteDelete] = await Promise.all([
+    supabaseClient.from("exam_records").delete().eq("board_id", board.id),
+    supabaseClient.from("board_note_records").delete().eq("board_id", board.id)
+  ]);
+  if (examDelete.error) throw examDelete.error;
+  if (noteDelete.error) throw noteDelete.error;
+  await saveRemoteBoard(board, nextExams, nextNotes);
+}
+
+async function deleteRemoteExam(id) {
+  if (!isOnlineMode()) return;
+  const { error } = await supabaseClient.from("exam_records").delete().eq("id", id);
+  if (error) throw error;
+}
+
+async function deleteRemoteNote(id) {
+  if (!isOnlineMode()) return;
+  const { error } = await supabaseClient.from("board_note_records").delete().eq("id", id);
+  if (error) throw error;
+}
+
+function saveLocalBoard(board, nextExams, nextNotes) {
+  localStorage.setItem(storageKey(board), JSON.stringify(nextExams));
+  localStorage.setItem(notesStorageKey(board), JSON.stringify(nextNotes));
+}
+
+async function syncBoardData(board, { silent = false } = {}) {
+  if (!isOnlineMode()) return;
+  try {
+    const localExams = normalizeExams(loadExams(board), board);
+    const localNotes = loadBoardNotes(board);
+    const remote = await fetchRemoteBoard(board);
+    const mergedExams = mergeExamsForSync(remote.exams, localExams);
+    const mergedNotes = mergeNotesForSync(remote.notes, localNotes);
+    await saveRemoteBoard(board, mergedExams, mergedNotes);
+    saveLocalBoard(board, mergedExams, mergedNotes);
+
+    if (board.id === activeBoard.id) {
+      exams = mergedExams;
+      boardNotes = mergedNotes;
+      render();
+    }
+
+    if (!silent) setStatus(`${board.label}: dados sincronizados com sua conta`);
+  } catch (error) {
+    setStatus(`Falha ao sincronizar ${board.label}: ${error.message || "verifique o Supabase"}`, true);
+  }
+}
+
+async function syncAllBoards({ silent = false } = {}) {
+  if (!isOnlineMode()) return;
+  for (const board of boards) {
+    await syncBoardData(board, { silent: true });
+  }
+  if (!silent) setStatus("Todos os vestibulares foram sincronizados.");
+}
+
+async function loadActiveBoardData() {
+  if (!isOnlineMode()) {
+    exams = loadExams(activeBoard);
+    boardNotes = loadBoardNotes(activeBoard);
+    render();
+    return;
+  }
+  await syncBoardData(activeBoard, { silent: true });
+  updateStatusForBoard();
 }
 
 function cssVar(name) {
@@ -956,7 +1080,7 @@ function fillForm(exam) {
   document.querySelector("#entry-card").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function saveForm(event) {
+async function saveForm(event) {
   event.preventDefault();
   const draft = readForm();
   const total = computeTotal(draft);
@@ -979,10 +1103,19 @@ function saveForm(event) {
   persist();
   render();
   resetForm();
-  setStatus(`${activeBoard.label}: prova salva neste navegador`);
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteBoard(activeBoard, exams, boardNotes);
+      setStatus(`${activeBoard.label}: prova salva e sincronizada`);
+    } catch (error) {
+      setStatus(`Prova salva localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+    }
+  } else {
+    setStatus(`${activeBoard.label}: prova salva neste navegador`);
+  }
 }
 
-function handleTableClick(event) {
+async function handleTableClick(event) {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
 
@@ -998,6 +1131,13 @@ function handleTableClick(event) {
     if (!window.confirm(`Excluir "${exam.prova}"?`)) return;
     exams = exams.filter((item) => item.id !== exam.id);
     persist();
+    if (isOnlineMode()) {
+      try {
+        await deleteRemoteExam(exam.id);
+      } catch (error) {
+        setStatus(`Prova excluida localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+      }
+    }
     render();
     setStatus(`${activeBoard.label}: prova excluida deste navegador`);
   }
@@ -1019,15 +1159,16 @@ function exportData() {
 function importData(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const imported = JSON.parse(String(reader.result || "[]"));
       if (!Array.isArray(imported)) throw new Error("Formato invalido");
       exams = normalizeExams(imported);
       persist();
+      if (isOnlineMode()) await replaceRemoteBoard(activeBoard, exams, boardNotes);
       render();
       resetForm();
-      setStatus(`${activeBoard.label}: backup importado`);
+      setStatus(isOnlineMode() ? `${activeBoard.label}: backup importado e sincronizado` : `${activeBoard.label}: backup importado`);
     } catch {
       setStatus("Arquivo de backup invalido", true);
     } finally {
@@ -1037,19 +1178,26 @@ function importData(file) {
   reader.readAsText(file);
 }
 
-function resetData() {
+async function resetData() {
   const message = activeBoard.seed.length
     ? `Restaurar a base inicial de ${activeBoard.label} e substituir os dados salvos neste navegador?`
     : `Limpar as provas de ${activeBoard.label} salvas neste navegador?`;
   if (!window.confirm(message)) return;
   exams = cloneSeed(activeBoard);
   persist();
+  if (isOnlineMode()) {
+    try {
+      await replaceRemoteBoard(activeBoard, exams, boardNotes);
+    } catch (error) {
+      setStatus(`Dados locais restaurados. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+    }
+  }
   render();
   resetForm();
   setStatus(activeBoard.seed.length ? `${activeBoard.label}: base inicial restaurada` : `${activeBoard.label}: tela limpa`);
 }
 
-function switchBoard(boardId) {
+async function switchBoard(boardId) {
   const nextBoard = boardById(boardId);
   if (!nextBoard || nextBoard.id === activeBoard.id) return;
   activeBoard = nextBoard;
@@ -1059,6 +1207,7 @@ function switchBoard(boardId) {
   localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
   resetForm();
   render();
+  if (isOnlineMode()) await syncBoardData(activeBoard, { silent: true });
   updateStatusForBoard();
 }
 
@@ -1094,7 +1243,7 @@ function scheduleChartResize() {
   });
 }
 
-function saveBoardNote() {
+async function saveBoardNote() {
   const text = el.boardNoteText?.value.trim();
   if (!text) {
     setStatus("Escreva uma observacao antes de salvar.", true);
@@ -1110,28 +1259,101 @@ function saveBoardNote() {
     ...boardNotes
   ];
   persistBoardNotes();
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteBoard(activeBoard, exams, boardNotes);
+    } catch (error) {
+      setStatus(`Observacao salva localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+    }
+  }
   el.boardNoteText.value = "";
   renderBoardNotes();
-  setStatus(`${activeBoard.label}: observacao salva neste navegador`);
+  setStatus(isOnlineMode() ? `${activeBoard.label}: observacao salva e sincronizada` : `${activeBoard.label}: observacao salva neste navegador`);
 }
 
 function clearBoardNote() {
   if (el.boardNoteText) el.boardNoteText.value = "";
 }
 
-function handleBoardNotesClick(event) {
+async function handleBoardNotesClick(event) {
   const button = event.target.closest("button[data-note-action]");
   if (!button || button.dataset.noteAction !== "delete") return;
   boardNotes = boardNotes.filter((note) => note.id !== button.dataset.id);
   persistBoardNotes();
+  if (isOnlineMode()) {
+    try {
+      await deleteRemoteNote(button.dataset.id);
+    } catch (error) {
+      setStatus(`Observacao excluida localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+    }
+  }
   renderBoardNotes();
   setStatus(`${activeBoard.label}: observacao excluida deste navegador`);
+}
+
+async function handleAuthSignIn(event) {
+  event.preventDefault();
+  if (!supabaseClient) return;
+  const email = el.authEmail.value.trim();
+  const password = el.authPassword.value;
+  if (!email || !password) {
+    setStatus("Preencha email e senha.", true);
+    return;
+  }
+
+  setAuthBusy(true);
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  setAuthBusy(false);
+  if (error) {
+    setStatus(`Nao foi possivel entrar: ${error.message}`, true);
+    return;
+  }
+  el.authPassword.value = "";
+}
+
+async function handleAuthSignUp() {
+  if (!supabaseClient) return;
+  const email = el.authEmail.value.trim();
+  const password = el.authPassword.value;
+  if (!email || !password) {
+    setStatus("Preencha email e senha para criar a conta.", true);
+    return;
+  }
+
+  setAuthBusy(true);
+  const { error } = await supabaseClient.auth.signUp({ email, password });
+  setAuthBusy(false);
+  if (error) {
+    setStatus(`Nao foi possivel criar a conta: ${error.message}`, true);
+    return;
+  }
+  el.authPassword.value = "";
+  setStatus("Conta criada. Se o Supabase pedir confirmacao, confirme pelo email.");
+}
+
+async function handleAuthSignOut() {
+  if (!supabaseClient) return;
+  setAuthBusy(true);
+  const { error } = await supabaseClient.auth.signOut();
+  setAuthBusy(false);
+  if (error) setStatus(`Nao foi possivel sair: ${error.message}`, true);
+}
+
+async function handleManualSync() {
+  if (!isOnlineMode()) return;
+  setAuthBusy(true);
+  await syncAllBoards();
+  setAuthBusy(false);
 }
 
 el.form.addEventListener("submit", saveForm);
 el.cancelEdit.addEventListener("click", resetForm);
 el.table.addEventListener("click", handleTableClick);
 el.themeToggle.addEventListener("click", toggleTheme);
+el.authForm.addEventListener("submit", handleAuthSignIn);
+el.authSignup.addEventListener("click", handleAuthSignUp);
+el.authSignout.addEventListener("click", handleAuthSignOut);
+el.syncNow.addEventListener("click", handleManualSync);
 el.saveBoardNote.addEventListener("click", saveBoardNote);
 el.clearBoardNote.addEventListener("click", clearBoardNote);
 el.boardNotesCarousel.addEventListener("click", handleBoardNotesClick);
@@ -1150,3 +1372,4 @@ applyTheme(activeTheme);
 render();
 updateFormTotal();
 updateStatusForBoard();
+initSupabase();

@@ -98,6 +98,7 @@ body[data-theme="dark"] {
 .chart-card,
 .target-card,
 .notes-card,
+.auth-panel,
 .table-section {
   min-width: 0;
   border: 1px solid var(--card-border);
@@ -326,6 +327,7 @@ button:disabled {
 .chart-card,
 .target-card,
 .notes-card,
+.auth-panel,
 .table-section {
   background: var(--card-bg);
   backdrop-filter: blur(14px);
@@ -369,8 +371,77 @@ button:disabled {
 .chart-card,
 .target-card,
 .notes-card,
+.auth-panel,
 .table-section {
   padding: 20px;
+}
+
+.auth-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.auth-status {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.auth-form,
+.auth-session {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.auth-session {
+  grid-template-columns: minmax(180px, 1fr) auto;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auth-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--field-bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.auth-form input:focus {
+  border-color: var(--green);
+  outline: 3px solid rgba(31, 138, 112, 0.16);
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.auth-session strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .entry-section {
@@ -820,6 +891,7 @@ td {
   .chart-card,
   .target-card,
   .notes-card,
+  .auth-panel,
   .table-section {
     border-radius: 8px;
   }
@@ -846,13 +918,21 @@ td {
     flex-direction: column;
   }
 
+  .auth-panel,
+  .auth-form,
+  .auth-session {
+    grid-template-columns: 1fr;
+  }
+
   .entry-actions,
-  .form-submit {
+  .form-submit,
+  .auth-actions {
     width: 100%;
   }
 
   .entry-actions .button,
-  .form-submit .button {
+  .form-submit .button,
+  .auth-actions .button {
     width: 100%;
   }
 
