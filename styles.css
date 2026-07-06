@@ -6,11 +6,36 @@
   --ink: #172026;
   --muted: #63707a;
   --line: #dce2e6;
+  --card-bg: rgba(255, 255, 255, 0.88);
+  --field-bg: #ffffff;
+  --subtle-bg: #fbfcfc;
+  --track-bg: #e7ecef;
+  --tab-bg: rgba(255, 255, 255, 0.82);
+  --button-bg: #ffffff;
+  --card-border: rgba(255, 255, 255, 0.72);
   --green: #1f8a70;
   --coral: #df6b57;
   --blue: #3772ff;
   --gold: #d09b2c;
   --shadow: 0 18px 55px rgba(28, 36, 44, 0.12);
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1114;
+  --surface: #151b20;
+  --surface-strong: #eff4f2;
+  --ink: #eef4f2;
+  --muted: #9aa8ad;
+  --line: #2a3338;
+  --card-bg: rgba(18, 24, 28, 0.9);
+  --field-bg: #10161a;
+  --subtle-bg: #12191d;
+  --track-bg: #293238;
+  --tab-bg: rgba(18, 24, 28, 0.9);
+  --button-bg: #11181c;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -42,6 +67,13 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body[data-theme="dark"] {
+  background:
+    linear-gradient(135deg, rgba(31, 138, 112, 0.16), transparent 38%),
+    linear-gradient(315deg, rgba(223, 107, 87, 0.1), transparent 35%),
+    var(--bg);
+}
+
 .shell {
   width: min(1180px, calc(100% - 32px));
   max-width: 1180px;
@@ -65,9 +97,10 @@ body {
 .entry-section,
 .chart-card,
 .target-card,
+.notes-card,
 .table-section {
   min-width: 0;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--card-border);
   border-radius: 8px;
   box-shadow: var(--shadow);
 }
@@ -142,10 +175,10 @@ h2 {
 .board-tab {
   flex: 0 0 auto;
   min-height: 42px;
-  border: 1px solid rgba(16, 20, 24, 0.12);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--tab-bg);
   color: var(--ink);
   cursor: pointer;
   font: inherit;
@@ -157,7 +190,7 @@ h2 {
 .board-tab.is-active {
   border-color: var(--surface-strong);
   background: var(--surface-strong);
-  color: #ffffff;
+  color: var(--bg);
 }
 
 .hero__actions {
@@ -187,17 +220,28 @@ h2 {
   color: #101418;
 }
 
+.button--theme {
+  border: 1px solid rgba(249, 251, 251, 0.48);
+  background: rgba(16, 20, 24, 0.18);
+  color: #f9fbfb;
+  cursor: pointer;
+}
+
+body[data-theme="dark"] .button--theme {
+  background: rgba(249, 251, 251, 0.12);
+}
+
 .button--primary-dark {
   border: 0;
   background: var(--surface-strong);
-  color: #ffffff;
+  color: var(--bg);
   cursor: pointer;
 }
 
 .button--secondary,
 .button--ghost {
   border: 1px solid var(--line);
-  background: #ffffff;
+  background: var(--button-bg);
   color: var(--ink);
   cursor: pointer;
 }
@@ -283,7 +327,7 @@ button:disabled {
 .target-card,
 .notes-card,
 .table-section {
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--card-bg);
   backdrop-filter: blur(14px);
 }
 
@@ -376,7 +420,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 12px;
-  background: #ffffff;
+  background: var(--field-bg);
   color: var(--ink);
   font-family: inherit;
   font-size: 1rem;
@@ -400,7 +444,7 @@ button:disabled {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfc;
+  background: var(--subtle-bg);
 }
 
 .form-total span {
@@ -476,7 +520,7 @@ canvas {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfc;
+  background: var(--subtle-bg);
   scroll-snap-align: start;
 }
 
@@ -529,7 +573,7 @@ canvas {
   height: 10px;
   overflow: hidden;
   border-radius: 999px;
-  background: #e7ecef;
+  background: var(--track-bg);
 }
 
 .area-fill {
@@ -556,7 +600,7 @@ canvas {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfc;
+  background: var(--subtle-bg);
 }
 
 .target-list strong {
@@ -589,7 +633,7 @@ canvas {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-  background: #ffffff;
+  background: var(--field-bg);
   color: var(--ink);
   font-family: inherit;
   font-size: 1rem;
@@ -626,7 +670,7 @@ canvas {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfc;
+  background: var(--subtle-bg);
   scroll-snap-align: start;
 }
 

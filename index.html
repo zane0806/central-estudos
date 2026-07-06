@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#101418">
+    <meta name="theme-color" content="#101418" id="theme-color-meta">
     <meta http-equiv="cache-control" content="no-cache">
     <meta http-equiv="pragma" content="no-cache">
     <meta
@@ -11,7 +11,7 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>Zan. Vest</title>
-    <link rel="stylesheet" href="./styles.css?v=20260705-2">
+    <link rel="stylesheet" href="./styles.css?v=20260705-3">
   </head>
   <body>
     <main class="shell">
@@ -22,6 +22,9 @@
             <a class="button button--primary" href="#entry-card">
               Registrar prova
             </a>
+            <button class="button button--theme" type="button" id="theme-toggle" aria-pressed="false">
+              Modo escuro
+            </button>
             <span class="status" id="data-status">Dados salvos neste navegador</span>
           </div>
         </div>
@@ -143,6 +146,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260705-2"></script>
+    <script src="./app.js?v=20260705-3"></script>
   </body>
 </html>

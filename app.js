@@ -4,10 +4,11 @@ const PREVIOUS_STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
+const THEME_KEY = "central-estudos.theme.v1";
 const TARGET_RATE = 0.92;
 
 const BOARD_SEED_VERSIONS = {
-  unesp: "drive-site2-2026-07-05-errors-fixed"
+  unesp: "drive-site2-2026-07-05-unesp-2021-review"
 };
 
 document.querySelector(".summary-grid")?.remove();
@@ -248,6 +249,8 @@ const boards = [
 
 const el = {
   status: document.querySelector("#data-status"),
+  themeToggle: document.querySelector("#theme-toggle"),
+  themeColorMeta: document.querySelector("#theme-color-meta"),
   goalPercent: document.querySelector("#goal-percent"),
   goalTotal: document.querySelector("#goal-total"),
   goalMeterFill: document.querySelector("#goal-meter-fill"),
@@ -280,6 +283,7 @@ const el = {
 let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
 let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
+let activeTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
 let chartFrame = 0;
 const chartWidths = new WeakMap();
 
@@ -499,6 +503,29 @@ function updateStatusForBoard() {
   setStatus(`${activeBoard.label}: dados salvos neste navegador`);
 }
 
+function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
+function applyTheme(theme) {
+  activeTheme = theme === "dark" ? "dark" : "light";
+  document.body.dataset.theme = activeTheme;
+  localStorage.setItem(THEME_KEY, activeTheme);
+  if (el.themeToggle) {
+    const isDark = activeTheme === "dark";
+    el.themeToggle.textContent = isDark ? "Modo claro" : "Modo escuro";
+    el.themeToggle.setAttribute("aria-pressed", String(isDark));
+  }
+  if (el.themeColorMeta) {
+    el.themeColorMeta.setAttribute("content", activeTheme === "dark" ? "#0d1114" : "#101418");
+  }
+  drawCharts(true);
+}
+
+function toggleTheme() {
+  applyTheme(activeTheme === "dark" ? "light" : "dark");
+}
+
 function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "--";
   return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
@@ -554,7 +581,7 @@ function drawProgressChart(canvas) {
   }));
 
   const targetY = padding.top + plotH - ((target - min) / (max - min)) * plotH;
-  ctx.strokeStyle = "#1f8a70";
+  ctx.strokeStyle = cssVar("--green") || "#1f8a70";
   ctx.setLineDash([8, 8]);
   ctx.beginPath();
   ctx.moveTo(padding.left, targetY);
@@ -572,18 +599,18 @@ function drawProgressChart(canvas) {
   ctx.stroke();
 
   points.forEach((point) => {
-    ctx.fillStyle = point.exam.total >= target ? "#1f8a70" : "#df6b57";
+    ctx.fillStyle = point.exam.total >= target ? (cssVar("--green") || "#1f8a70") : (cssVar("--coral") || "#df6b57");
     ctx.beginPath();
     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#172026";
+    ctx.fillStyle = cssVar("--ink") || "#172026";
     ctx.font = "700 11px system-ui";
     ctx.textAlign = "center";
     ctx.fillText(point.exam.total, point.x, point.y - 11);
   });
 
-  ctx.fillStyle = "#63707a";
+  ctx.fillStyle = cssVar("--muted") || "#63707a";
   ctx.font = "700 10px system-ui";
   ctx.textAlign = "right";
   points.forEach((point, index) => {
@@ -615,8 +642,8 @@ function prepareCanvas(canvas) {
 
 function drawGrid(ctx, padding, width, height, ticks, min, max) {
   const plotH = height - padding.top - padding.bottom;
-  ctx.strokeStyle = "#dce2e6";
-  ctx.fillStyle = "#63707a";
+  ctx.strokeStyle = cssVar("--line") || "#dce2e6";
+  ctx.fillStyle = cssVar("--muted") || "#63707a";
   ctx.lineWidth = 1;
   ctx.font = "700 10px system-ui";
   ctx.textAlign = "right";
@@ -632,7 +659,7 @@ function drawGrid(ctx, padding, width, height, ticks, min, max) {
 }
 
 function drawEmptyChart(ctx, width, height, label) {
-  ctx.fillStyle = "#63707a";
+  ctx.fillStyle = cssVar("--muted") || "#63707a";
   ctx.font = "800 14px system-ui";
   ctx.textAlign = "center";
   ctx.fillText(label, width / 2, height / 2);
@@ -1104,6 +1131,7 @@ function handleBoardNotesClick(event) {
 el.form.addEventListener("submit", saveForm);
 el.cancelEdit.addEventListener("click", resetForm);
 el.table.addEventListener("click", handleTableClick);
+el.themeToggle.addEventListener("click", toggleTheme);
 el.saveBoardNote.addEventListener("click", saveBoardNote);
 el.clearBoardNote.addEventListener("click", clearBoardNote);
 el.boardNotesCarousel.addEventListener("click", handleBoardNotesClick);
@@ -1118,6 +1146,7 @@ el.boardTabs.forEach((tab) => {
 
 window.addEventListener("resize", scheduleChartResize, { passive: true });
 
+applyTheme(activeTheme);
 render();
 updateFormTotal();
 updateStatusForBoard();
