@@ -2,7 +2,12 @@ const LEGACY_STORAGE_KEY = "central-estudos.exams.v2";
 const STORAGE_PREFIX = "central-estudos.board.v2";
 const PREVIOUS_STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
+const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const TARGET_RATE = 0.92;
+
+const BOARD_SEED_VERSIONS = {
+  unesp: "drive-site2-2026-07-05"
+};
 
 document.querySelector(".summary-grid")?.remove();
 
@@ -34,6 +39,121 @@ const seedExams = [
   { prova: "ENEM S. Poli", humanas: 37, linguagens: 39, matematica: 41, natureza: 38, total: 155, obs: "" }
 ];
 
+const unespSeedExams = [
+  {
+    prova: "UNESP 2026 - Simulado 1",
+    portugues: 3,
+    literatura: 4,
+    artes: 0,
+    ingles: 2,
+    historia: 3,
+    geografia: 2,
+    filosofia_sociologia: 0,
+    biologia: 1,
+    quimica: 1,
+    fisica: 4,
+    matematica: 1,
+    total: 21,
+    obs: "Dados da foto do Drive. Esta prova estava anotada como acertos."
+  },
+  {
+    prova: "UNESP 2025",
+    portugues: 6,
+    literatura: 8,
+    artes: 2,
+    ingles: 7,
+    historia: 9,
+    geografia: 9,
+    filosofia_sociologia: 8,
+    biologia: 8,
+    quimica: 6,
+    fisica: 5,
+    matematica: 5,
+    total: 73,
+    obs: "Convertido dos erros anotados na foto do Drive."
+  },
+  {
+    prova: "UNESP 2024",
+    portugues: 9,
+    literatura: 8,
+    artes: 2,
+    ingles: 9,
+    historia: 9,
+    geografia: 8,
+    filosofia_sociologia: 9,
+    biologia: 5,
+    quimica: 5,
+    fisica: 6,
+    matematica: 6,
+    total: 76,
+    obs: "Convertido dos erros anotados na foto do Drive. 6 duvidas."
+  },
+  {
+    prova: "UNESP 2023",
+    portugues: 9,
+    literatura: 8,
+    artes: 1,
+    ingles: 8,
+    historia: 9,
+    geografia: 7,
+    filosofia_sociologia: 9,
+    biologia: 5,
+    quimica: 6,
+    fisica: 7,
+    matematica: 8,
+    total: 77,
+    obs: "Convertido dos erros anotados na foto do Drive."
+  },
+  {
+    prova: "UNESP 2022 - Bio",
+    portugues: 8,
+    literatura: 8,
+    artes: 2,
+    ingles: 10,
+    historia: 8,
+    geografia: 8,
+    filosofia_sociologia: 9,
+    biologia: 8,
+    quimica: 7,
+    fisica: 5,
+    matematica: 7,
+    total: 80,
+    obs: "Convertido dos erros anotados na foto do Drive."
+  },
+  {
+    prova: "UNESP 2022 - H/Ex",
+    portugues: 9,
+    literatura: 8,
+    artes: 1,
+    ingles: 8,
+    historia: 8,
+    geografia: 7,
+    filosofia_sociologia: 9,
+    biologia: 7,
+    quimica: 6,
+    fisica: 6,
+    matematica: 6,
+    total: 75,
+    obs: "Convertido dos erros anotados na foto do Drive."
+  },
+  {
+    prova: "UNESP 2021",
+    portugues: 6,
+    literatura: 8,
+    artes: 2,
+    ingles: 8,
+    historia: 8,
+    geografia: 10,
+    filosofia_sociologia: 9,
+    biologia: 5,
+    quimica: 7,
+    fisica: 3,
+    matematica: 7,
+    total: 77,
+    obs: "Convertido dos erros anotados na foto do Drive. Dia 1."
+  }
+];
+
 const boards = [
   {
     id: "enem",
@@ -53,7 +173,7 @@ const boards = [
     id: "unesp",
     label: "UNESP",
     totalMax: 90,
-    seed: [],
+    seed: unespSeedExams,
     placeholder: "Ex: UNESP 2026 - 1a fase",
     note: "1a fase: 90 objetivas; distribuicao por disciplina para controle pessoal",
     sections: [
@@ -165,6 +285,10 @@ function storageKey(board, prefix = STORAGE_PREFIX) {
   return `${prefix}.${board.id}`;
 }
 
+function seedVersionKey(board) {
+  return `${SEED_VERSION_PREFIX}.${board.id}`;
+}
+
 function targetTotal(board = activeBoard) {
   return Math.ceil(board.totalMax * TARGET_RATE);
 }
@@ -203,6 +327,26 @@ function getScore(exam, key) {
 
 function cloneSeed(board) {
   return board.seed.map((exam) => withId({ ...exam, id: crypto.randomUUID() }));
+}
+
+function examSignature(exam) {
+  return String(exam.prova || "").trim().toLowerCase();
+}
+
+function mergeSeedUpdate(examsList, board) {
+  const seedVersion = BOARD_SEED_VERSIONS[board.id];
+  if (!seedVersion || localStorage.getItem(seedVersionKey(board)) === seedVersion) {
+    return examsList;
+  }
+
+  const existing = new Set(examsList.map(examSignature));
+  const additions = cloneSeed(board).filter((exam) => !existing.has(examSignature(exam)));
+  const merged = [...additions, ...examsList];
+  localStorage.setItem(seedVersionKey(board), seedVersion);
+  if (additions.length) {
+    localStorage.setItem(storageKey(board), JSON.stringify(merged));
+  }
+  return merged;
 }
 
 function scoreFromInput(input) {
@@ -285,13 +429,14 @@ function readStoredArray(key) {
 
 function loadExams(board) {
   const stored = readStoredArray(storageKey(board));
-  if (stored) return normalizeExams(stored, board);
+  if (stored) return mergeSeedUpdate(normalizeExams(stored, board), board);
 
   const previous = readStoredArray(storageKey(board, PREVIOUS_STORAGE_PREFIX));
   if (previous) {
     const migrated = normalizeExams(previous, board);
-    localStorage.setItem(storageKey(board), JSON.stringify(migrated));
-    return migrated;
+    const merged = mergeSeedUpdate(migrated, board);
+    localStorage.setItem(storageKey(board), JSON.stringify(merged));
+    return merged;
   }
 
   if (board.id === "enem") {
