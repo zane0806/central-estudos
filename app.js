@@ -8,7 +8,7 @@ const THEME_KEY = "central-estudos.theme.v1";
 const TARGET_RATE = 0.92;
 
 const BOARD_SEED_VERSIONS = {
-  unesp: "drive-site2-2026-07-05-unesp-2021-review"
+  unesp: "drive-site2-2026-07-05-unesp-2021-fisica-zero"
 };
 
 document.querySelector(".summary-grid")?.remove();
@@ -149,10 +149,10 @@ const unespSeedExams = [
     filosofia_sociologia: 9,
     biologia: 5,
     quimica: 7,
-    fisica: 3,
+    fisica: 7,
     matematica: 7,
     total: 77,
-    obs: "Convertido dos erros anotados na foto do Drive. Dia 1."
+    obs: "Convertido dos 13 erros anotados na foto do Drive."
   }
 ];
 
