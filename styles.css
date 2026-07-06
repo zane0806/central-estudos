@@ -120,6 +120,61 @@ body[data-theme="dark"] {
     url("./assets/hero.jpg") center 36% / cover;
 }
 
+.sync-icon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(142, 225, 203, 0.34);
+  border-radius: 50%;
+  background: rgba(9, 16, 18, 0.44);
+  color: rgba(207, 242, 229, 0.88);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  touch-action: manipulation;
+}
+
+.sync-icon:hover,
+.sync-icon:focus-visible {
+  border-color: rgba(142, 225, 203, 0.58);
+  background: rgba(31, 138, 112, 0.34);
+  color: #effbf7;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.sync-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.45;
+}
+
+.sync-icon.is-syncing svg {
+  animation: sync-spin 0.86s linear infinite;
+}
+
+.sync-icon:disabled {
+  opacity: 0.72;
+  transform: none;
+}
+
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--green);

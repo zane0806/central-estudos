@@ -412,6 +412,7 @@ function updateAuthUi() {
   const signedIn = isOnlineMode();
   el.authForm.hidden = signedIn;
   el.authSession.hidden = !signedIn;
+  if (el.syncNow) el.syncNow.hidden = !signedIn;
   el.authStatus.textContent = signedIn
     ? "Sessao ativa neste navegador. Os dados sincronizam com sua conta."
     : "Entre para sincronizar os dados entre celular e computador.";
@@ -1380,9 +1381,14 @@ async function handleAuthSignOut() {
 
 async function handleManualSync() {
   if (!isOnlineMode()) return;
+  el.syncNow.classList.add("is-syncing");
   setAuthBusy(true);
-  await syncAllBoards();
-  setAuthBusy(false);
+  try {
+    await syncAllBoards();
+  } finally {
+    setAuthBusy(false);
+    el.syncNow.classList.remove("is-syncing");
+  }
 }
 
 el.form.addEventListener("submit", saveForm);
