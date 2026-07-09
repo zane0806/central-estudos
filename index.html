@@ -11,7 +11,7 @@
       content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
     >
     <title>Z.Vest</title>
-    <link rel="stylesheet" href="./styles.css?v=20260706-7">
+    <link rel="stylesheet" href="./styles.css?v=20260709-1">
   </head>
   <body>
     <main class="shell">
@@ -33,7 +33,7 @@
             <button class="button button--theme" type="button" id="theme-toggle" aria-pressed="false">
               Modo escuro
             </button>
-            <span class="status" id="data-status">Dados salvos neste navegador</span>
+            <span class="status" id="data-status" role="status" aria-live="polite">Dados salvos neste navegador</span>
           </div>
         </div>
       </section>
@@ -50,7 +50,7 @@
         <div>
           <p class="eyebrow">conta online</p>
           <h2 id="auth-title">Sincronizacao</h2>
-          <p class="auth-status" id="auth-status">Dados locais neste navegador.</p>
+          <p class="auth-status" id="auth-status">Sem login, cada prova fica somente neste navegador.</p>
         </div>
 
         <form class="auth-form" id="auth-form">
@@ -190,7 +190,7 @@
     </main>
 
     <script src="./supabase-config.js?v=20260706-1"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260706-6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2"></script>
+    <script src="./app.js?v=20260709-1"></script>
   </body>
 </html>

@@ -164,6 +164,18 @@ body[data-theme="dark"] {
   animation: sync-spin 0.86s linear infinite;
 }
 
+.sync-icon.is-success {
+  border-color: rgba(142, 225, 203, 0.82);
+  background: rgba(31, 138, 112, 0.68);
+  color: #f4fffb;
+}
+
+.sync-icon.is-error {
+  border-color: rgba(255, 171, 153, 0.82);
+  background: rgba(184, 74, 66, 0.72);
+  color: #fff5f2;
+}
+
 .sync-icon:disabled {
   opacity: 0.72;
   transform: none;

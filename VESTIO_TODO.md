@@ -10,7 +10,8 @@
 - Criar uma tela/estado claro para primeira vez:
   - explicar que dados locais so ficam naquele navegador;
   - incentivar login para sincronizar.
-- Revisar seeds publicas e garantir que nenhum dado privado do Gabriel esteja versionado.
+- [x] Revisar seeds publicas e garantir que nenhum dado privado do Gabriel esteja versionado.
+  - Snapshots legados com notas reais removidos do repositorio em 09/07/2026.
 
 ## Provas e dados
 

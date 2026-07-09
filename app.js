@@ -171,6 +171,7 @@ let mapMode = localStorage.getItem(MAP_MODE_KEY) === "errors" ? "errors" : "scor
 let supabaseClient = null;
 let currentUser = null;
 let chartFrame = 0;
+let syncFeedbackTimer = 0;
 const chartWidths = new WeakMap();
 
 function boardById(id) {
@@ -385,6 +386,28 @@ function setStatus(message, isError = false) {
   el.status.classList.toggle("is-error", isError);
 }
 
+function setSyncFeedback(state = "idle") {
+  if (!el.syncNow) return;
+  window.clearTimeout(syncFeedbackTimer);
+  el.syncNow.classList.remove("is-success", "is-error");
+
+  const feedback = {
+    success: "Sincronizacao concluida",
+    error: "Falha na sincronizacao"
+  }[state];
+
+  if (!feedback) {
+    el.syncNow.setAttribute("aria-label", "Sincronizar dados");
+    el.syncNow.title = "Sincronizar dados";
+    return;
+  }
+
+  el.syncNow.classList.add(`is-${state}`);
+  el.syncNow.setAttribute("aria-label", feedback);
+  el.syncNow.title = feedback;
+  syncFeedbackTimer = window.setTimeout(() => setSyncFeedback(), 2200);
+}
+
 function updateStatusForBoard() {
   setStatus(currentUser ? `${activeBoard.label}: sincronizado com sua conta` : `${activeBoard.label}: dados salvos neste navegador`);
 }
@@ -415,7 +438,7 @@ function updateAuthUi() {
   if (el.syncNow) el.syncNow.hidden = !signedIn;
   el.authStatus.textContent = signedIn
     ? "Sessao ativa neste navegador. Os dados sincronizam com sua conta."
-    : "Entre para sincronizar os dados entre celular e computador.";
+    : "Sem login, cada prova fica somente neste navegador. Entre para sincronizar com celular e computador.";
   if (el.authUserEmail) el.authUserEmail.textContent = currentUser?.email || "";
 }
 
@@ -452,9 +475,14 @@ async function initSupabase() {
     currentUser = session?.user || null;
     updateAuthUi();
     if (currentUser) {
-      await syncAllBoards({ silent: true });
-      await loadActiveBoardData();
-      setStatus("Conta conectada. Dados sincronizados.");
+      const allSynced = await syncAllBoards({ silent: true });
+      const activeSynced = await loadActiveBoardData();
+      setStatus(
+        allSynced && activeSynced
+          ? "Conta conectada. Dados sincronizados."
+          : "Conta conectada, mas a sincronizacao falhou. Seus dados locais continuam neste navegador.",
+        !(allSynced && activeSynced)
+      );
     } else {
       exams = loadExams(activeBoard);
       boardNotes = loadBoardNotes(activeBoard);
@@ -590,7 +618,7 @@ function saveLocalBoard(board, nextExams, nextNotes) {
 }
 
 async function syncBoardData(board, { silent = false } = {}) {
-  if (!isOnlineMode()) return;
+  if (!isOnlineMode()) return { ok: false, error: new Error("Sessao online indisponivel") };
   try {
     const localExams = normalizeExams(loadExams(board), board);
     const localNotes = loadBoardNotes(board);
@@ -607,17 +635,36 @@ async function syncBoardData(board, { silent = false } = {}) {
     }
 
     if (!silent) setStatus(`${board.label}: dados sincronizados com sua conta`);
+    return { ok: true };
   } catch (error) {
-    setStatus(`Falha ao sincronizar ${board.label}: ${error.message || "verifique o Supabase"}`, true);
+    if (!silent) {
+      setStatus(
+        `Nao foi possivel sincronizar ${board.label}. Seus dados continuam salvos neste navegador.`,
+        true
+      );
+    }
+    return { ok: false, error };
   }
 }
 
 async function syncAllBoards({ silent = false } = {}) {
-  if (!isOnlineMode()) return;
+  if (!isOnlineMode()) return false;
+  const failedBoards = [];
   for (const board of boards) {
-    await syncBoardData(board, { silent: true });
+    const result = await syncBoardData(board, { silent: true });
+    if (!result.ok) failedBoards.push(board.label);
+  }
+  if (failedBoards.length) {
+    if (!silent) {
+      setStatus(
+        `Nao foi possivel sincronizar ${failedBoards.join(", ")}. Seus dados continuam salvos neste navegador.`,
+        true
+      );
+    }
+    return false;
   }
   if (!silent) setStatus("Todos os vestibulares foram sincronizados.");
+  return true;
 }
 
 async function loadActiveBoardData() {
@@ -625,9 +672,10 @@ async function loadActiveBoardData() {
     exams = loadExams(activeBoard);
     boardNotes = loadBoardNotes(activeBoard);
     render();
-    return;
+    return true;
   }
-  await syncBoardData(activeBoard, { silent: true });
+  const result = await syncBoardData(activeBoard, { silent: true });
+  return result.ok;
   updateStatusForBoard();
 }
 
@@ -1381,10 +1429,12 @@ async function handleAuthSignOut() {
 
 async function handleManualSync() {
   if (!isOnlineMode()) return;
+  setSyncFeedback();
   el.syncNow.classList.add("is-syncing");
   setAuthBusy(true);
   try {
-    await syncAllBoards();
+    const synced = await syncAllBoards();
+    setSyncFeedback(synced ? "success" : "error");
   } finally {
     setAuthBusy(false);
     el.syncNow.classList.remove("is-syncing");
