@@ -1,13 +1,13 @@
-# Vest.io / Z.Vest - contexto do projeto
+# Vest.io - contexto do projeto
 
 Use este arquivo como contexto fixo do Projeto `Vest.io`.
 
 ## Identidade
 
-- Nome visual atual do site: `Z.Vest`.
+- Nome visual atual do site: `Vest.io`.
 - Repositorio GitHub: `zane0806/central-estudos`.
 - Site publicado: `https://zane0806.github.io/central-estudos/`.
-- Projeto local: `C:\Users\Gabriel\Documents\Codex\2026-07-03\cria-um-novo-site-em-um\central-estudos`.
+- Projeto local: `C:\Users\Gabriel\Documents\Vest.io\central-estudos`.
 - Objetivo: painel pessoal para registrar provas/simulados, acompanhar evolucao, ver graficos e comparar desempenho por vestibular.
 
 ## Stack
@@ -34,6 +34,7 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 - Tabelas:
   - `public.exam_records`
   - `public.board_note_records`
+  - `public.user_settings`
 - Schema esta em `supabase-schema.sql`.
 - RLS esta ativado. Cada usuario autenticado so pode selecionar/inserir/alterar/deletar as proprias linhas com `auth.uid() = user_id`.
 - O site usa login por email/senha do Supabase.
@@ -52,15 +53,20 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 ## Interface atual
 
 - Hero/topo usa uma obra de arte em `assets/hero.jpg`.
-- Titulo do hero: `Z.Vest`.
+- Titulo do hero: `Vest.io`.
 - Enquadramento atual da imagem: `url("./assets/hero.jpg") center 36% / cover`, para mostrar um pouco do rosto do homem e o livro.
-- O botao de sincronizar virou um icone circular no canto superior direito da obra.
+- O cabecalho e fixo em todas as telas e contem navegacao para Inicio, Registros e Caderno, tema e sincronizacao.
+- A landing/Inicio e isolada: nao e possivel chegar aos registros apenas rolando; e necessario usar um botao ou icone de navegacao.
+- O botao de sincronizar fica no cabecalho. Deslogado, abre o modal privado; logado, sincroniza diretamente.
 - O icone sincroniza todos os vestibulares e gira enquanto carrega.
 - A animacao atual gira no sentido inverso: `rotate(-360deg)`.
 - Existe modo claro/escuro.
 - Existe seletor de vestibular: ENEM, UNESP, FAMEMA, FAMERP, UNIFESP.
-- Existe painel de login/sessao chamado `Sincronizacao`.
-- O botao antigo `Sincronizar` foi removido do painel de baixo.
+- O login fica em modal e nao ocupa espaco permanente para usuarios conectados.
+- A meta de acertos e configuravel, inicia vazia e fica em `localStorage` e em `user_settings` quando ha conta.
+- A meta alimenta os status, o total-alvo e a linha verde do grafico.
+- O Caderno e uma tela separada com canvas quadriculado e notas arrastaveis por vestibular.
+- Posicoes das notas usam `position_x` e `position_y` em `board_note_records`.
 
 ## Vestibulares e regras
 
@@ -153,6 +159,7 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
   - `central-estudos.board-notes.v1`
   - `central-estudos.theme.v1`
   - `central-estudos.map-mode.v1`
+  - `central-estudos.target-percent.v1`
 - Se Supabase estiver configurado e o usuario estiver logado, o site sincroniza dados entre celular e PC.
 - Se nao estiver logado, o site salva apenas localmente naquele navegador.
 
@@ -174,7 +181,7 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 - Tipografia:
   - `Bebas Neue` para titulos e numeros de impacto;
   - `Archivo` para interface, formularios e textos.
-- Hero usa `assets/hero.jpg` em tela cheia, texto branco direto sobre a imagem e meta de 92% em destaque.
+- Hero usa `assets/hero.jpg` em tela cheia, texto branco direto sobre a imagem e meta configuravel em destaque.
 - Interface usa grade reta, divisorias finas, pouco arredondamento e vermelho como cor de assinatura.
 - Responsividade revisada em desktop e celular (375 px), sem overflow horizontal da pagina.
 

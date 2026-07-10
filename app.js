@@ -6,8 +6,8 @@ const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
 const THEME_KEY = "central-estudos.theme.v1";
 const MAP_MODE_KEY = "central-estudos.map-mode.v1";
+const TARGET_PERCENT_KEY = "central-estudos.target-percent.v1";
 const SUPABASE_CONFIG = window.ZAN_SUPABASE_CONFIG || {};
-const TARGET_RATE = 0.92;
 
 const BOARD_SEED_VERSIONS = {
   unesp: "drive-site2-2026-07-05-unesp-2021-fisica-zero"
@@ -123,7 +123,12 @@ const el = {
   status: document.querySelector("#data-status"),
   themeToggle: document.querySelector("#theme-toggle"),
   themeColorMeta: document.querySelector("#theme-color-meta"),
+  views: [...document.querySelectorAll(".app-view")],
+  viewButtons: [...document.querySelectorAll("[data-view-target]")],
   authPanel: document.querySelector("#auth-panel"),
+  authClose: document.querySelector("#auth-close"),
+  authCloseBackdrop: document.querySelector("#auth-close-backdrop"),
+  activateSync: document.querySelector("#activate-sync"),
   authForm: document.querySelector("#auth-form"),
   authStatus: document.querySelector("#auth-status"),
   authEmail: document.querySelector("#auth-email"),
@@ -136,6 +141,9 @@ const el = {
   goalPercent: document.querySelector("#goal-percent"),
   goalTotal: document.querySelector("#goal-total"),
   goalMeterFill: document.querySelector("#goal-meter-fill"),
+  goalForm: document.querySelector("#goal-form"),
+  goalInput: document.querySelector("#goal-input"),
+  goalNudge: document.querySelector("#goal-nudge"),
   chartGoalPill: document.querySelector("#chart-goal-pill"),
   targetList: document.querySelector("#target-list"),
   progressChart: document.querySelector("#progress-chart"),
@@ -145,6 +153,7 @@ const el = {
   saveBoardNote: document.querySelector("#save-board-note"),
   clearBoardNote: document.querySelector("#clear-board-note"),
   boardNotesCarousel: document.querySelector("#board-notes-carousel"),
+  notebookBoardLabel: document.querySelector("#notebook-board-label"),
   table: document.querySelector("#exam-table"),
   tableHead: document.querySelector("thead tr"),
   form: document.querySelector("#exam-form"),
@@ -156,10 +165,6 @@ const el = {
   formTotal: document.querySelector("#form-total"),
   saveExam: document.querySelector("#save-exam"),
   cancelEdit: document.querySelector("#cancel-edit"),
-  exportData: document.querySelector("#export-data"),
-  importData: document.querySelector("#import-data"),
-  importFile: document.querySelector("#import-file"),
-  resetData: document.querySelector("#reset-data"),
   boardTabs: [...document.querySelectorAll("[data-board]")]
 };
 
@@ -168,10 +173,13 @@ let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
 let activeTheme = localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
 let mapMode = localStorage.getItem(MAP_MODE_KEY) === "errors" ? "errors" : "scores";
+let targetPercent = loadTargetPercent();
+let activeView = "home";
 let supabaseClient = null;
 let currentUser = null;
 let chartFrame = 0;
 let syncFeedbackTimer = 0;
+let noteDrag = null;
 const chartWidths = new WeakMap();
 
 function boardById(id) {
@@ -191,7 +199,17 @@ function notesStorageKey(board) {
 }
 
 function targetTotal(board = activeBoard) {
-  return Math.ceil(board.totalMax * TARGET_RATE);
+  return targetPercent === null ? null : Math.ceil(board.totalMax * (targetPercent / 100));
+}
+
+function loadTargetPercent() {
+  const parsed = nullableScore(localStorage.getItem(TARGET_PERCENT_KEY));
+  return parsed !== null && parsed >= 1 && parsed <= 100 ? Math.round(parsed) : null;
+}
+
+function persistTargetPercent() {
+  if (targetPercent === null) localStorage.removeItem(TARGET_PERCENT_KEY);
+  else localStorage.setItem(TARGET_PERCENT_KEY, String(targetPercent));
 }
 
 function allSectionKeys() {
@@ -365,10 +383,12 @@ function loadBoardNotes(board) {
   if (!stored) return [];
   return stored
     .filter((note) => note && typeof note.text === "string" && note.text.trim())
-    .map((note) => ({
+    .map((note, index) => ({
       id: note.id || crypto.randomUUID(),
       text: note.text.trim(),
-      createdAt: note.createdAt || new Date().toISOString()
+      createdAt: note.createdAt || new Date().toISOString(),
+      x: Number.isFinite(Number(note.x)) ? Number(note.x) : 32 + (index % 3) * 278,
+      y: Number.isFinite(Number(note.y)) ? Number(note.y) : 32 + Math.floor(index / 3) * 190
     }));
 }
 
@@ -379,6 +399,38 @@ function persistBoardNotes() {
 function persist() {
   localStorage.setItem(storageKey(activeBoard), JSON.stringify(exams));
   localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
+}
+
+function switchView(view, { updateHash = true } = {}) {
+  const next = ["home", "records", "notebook"].includes(view) ? view : "home";
+  activeView = next;
+  document.body.dataset.view = next;
+  el.views.forEach((section) => {
+    section.hidden = section.dataset.view !== next;
+  });
+  el.viewButtons.forEach((button) => {
+    const isActive = button.dataset.viewTarget === next;
+    button.classList.toggle("is-active", isActive);
+    if (button.closest(".header-nav")) button.setAttribute("aria-pressed", String(isActive));
+  });
+  if (updateHash) history.replaceState(null, "", `#${next === "home" ? "inicio" : next === "records" ? "registros" : "caderno"}`);
+  window.scrollTo({ top: 0, behavior: "auto" });
+  if (next === "records") requestAnimationFrame(() => drawCharts(true));
+}
+
+function openAuthModal() {
+  if (!isSupabaseConfigured()) {
+    setStatus("Sincronização indisponível neste momento.", true);
+    return;
+  }
+  el.authPanel.hidden = false;
+  document.body.classList.add("has-modal");
+  requestAnimationFrame(() => el.authEmail?.focus());
+}
+
+function closeAuthModal() {
+  el.authPanel.hidden = true;
+  document.body.classList.remove("has-modal");
 }
 
 function setStatus(message, isError = false) {
@@ -409,7 +461,7 @@ function setSyncFeedback(state = "idle") {
 }
 
 function updateStatusForBoard() {
-  setStatus(currentUser ? `${activeBoard.label}: sincronizado com sua conta` : `${activeBoard.label}: dados salvos neste navegador`);
+  setStatus(currentUser ? `${activeBoard.label}: sincronização ativa.` : "Dados salvos somente neste navegador.");
 }
 
 function isSupabaseConfigured() {
@@ -425,25 +477,29 @@ function isOnlineMode() {
 }
 
 function updateAuthUi() {
-  if (!el.authPanel) return;
   if (!isSupabaseConfigured()) {
-    el.authPanel.hidden = true;
+    closeAuthModal();
+    el.activateSync.hidden = true;
     return;
   }
 
-  el.authPanel.hidden = false;
   const signedIn = isOnlineMode();
   el.authForm.hidden = signedIn;
   el.authSession.hidden = !signedIn;
-  if (el.syncNow) el.syncNow.hidden = !signedIn;
+  el.activateSync.hidden = false;
+  el.activateSync.textContent = signedIn ? "Sincronização ativa" : "Ativar sincronização";
+  el.activateSync.classList.toggle("is-connected", signedIn);
+  el.syncNow.setAttribute("aria-label", signedIn ? "Sincronizar dados" : "Ativar sincronização");
+  el.syncNow.title = signedIn ? "Sincronizar dados" : "Ativar sincronização";
   el.authStatus.textContent = signedIn
-    ? "Sessao ativa neste navegador. Os dados sincronizam com sua conta."
-    : "Sem login, cada prova fica somente neste navegador. Entre para sincronizar com celular e computador.";
+    ? "Sessão ativa. Seus dados privados sincronizam entre os dispositivos."
+    : "Entre para acessar os mesmos dados no celular e no computador.";
   if (el.authUserEmail) el.authUserEmail.textContent = currentUser?.email || "";
+  updateStatusForBoard();
 }
 
 function setAuthBusy(isBusy) {
-  [el.authSignup, el.authSignout, el.syncNow, el.authForm?.querySelector("button[type='submit']")]
+  [el.authSignup, el.authSignout, el.syncNow, el.activateSync, el.authForm?.querySelector("button[type='submit']")]
     .filter(Boolean)
     .forEach((button) => {
       button.disabled = isBusy;
@@ -475,13 +531,17 @@ async function initSupabase() {
     currentUser = session?.user || null;
     updateAuthUi();
     if (currentUser) {
-      const allSynced = await syncAllBoards({ silent: true });
+      const [allSynced, settingsSynced] = await Promise.all([
+        syncAllBoards({ silent: true }),
+        syncUserSettings()
+      ]);
       const activeSynced = await loadActiveBoardData();
+      closeAuthModal();
       setStatus(
-        allSynced && activeSynced
+        allSynced && settingsSynced && activeSynced
           ? "Conta conectada. Dados sincronizados."
           : "Conta conectada, mas a sincronizacao falhou. Seus dados locais continuam neste navegador.",
-        !(allSynced && activeSynced)
+        !(allSynced && settingsSynced && activeSynced)
       );
     } else {
       exams = loadExams(activeBoard);
@@ -492,8 +552,47 @@ async function initSupabase() {
   });
 
   if (currentUser) {
-    await syncAllBoards({ silent: true });
+    await Promise.all([syncAllBoards({ silent: true }), syncUserSettings()]);
     await loadActiveBoardData();
+  }
+}
+
+async function fetchRemoteSettings() {
+  if (!isOnlineMode()) return null;
+  const { data, error } = await supabaseClient
+    .from("user_settings")
+    .select("target_percent")
+    .eq("user_id", currentUser.id)
+    .limit(1);
+  if (error) throw error;
+  const value = nullableScore(data?.[0]?.target_percent);
+  return value !== null && value >= 1 && value <= 100 ? Math.round(value) : null;
+}
+
+async function saveRemoteSettings() {
+  if (!isOnlineMode()) return;
+  const { error } = await supabaseClient.from("user_settings").upsert(
+    { user_id: currentUser.id, target_percent: targetPercent },
+    { onConflict: "user_id" }
+  );
+  if (error) throw error;
+}
+
+async function syncUserSettings() {
+  if (!isOnlineMode()) return false;
+  try {
+    const remoteTarget = await fetchRemoteSettings();
+    if (remoteTarget !== null) {
+      targetPercent = remoteTarget;
+      persistTargetPercent();
+    } else if (targetPercent !== null) {
+      await saveRemoteSettings();
+    }
+    renderTargets();
+    drawCharts(true);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -524,7 +623,9 @@ function rowToNote(row) {
   return {
     id: row.id,
     text: String(row.text || "").trim(),
-    createdAt: row.created_at || row.createdAt || new Date().toISOString()
+    createdAt: row.created_at || row.createdAt || new Date().toISOString(),
+    x: Number(row.position_x ?? row.x ?? 32),
+    y: Number(row.position_y ?? row.y ?? 32)
   };
 }
 
@@ -534,7 +635,9 @@ function noteToRow(note, board) {
     user_id: currentUser.id,
     board_id: board.id,
     text: note.text,
-    created_at: note.createdAt || new Date().toISOString()
+    created_at: note.createdAt || new Date().toISOString(),
+    position_x: Math.round(note.x || 32),
+    position_y: Math.round(note.y || 32)
   };
 }
 
@@ -561,7 +664,7 @@ async function fetchRemoteBoard(board) {
       .order("created_at", { ascending: true }),
     supabaseClient
       .from("board_note_records")
-      .select("id, board_id, text, created_at, updated_at")
+      .select("id, board_id, text, position_x, position_y, created_at, updated_at")
       .eq("board_id", board.id)
       .order("created_at", { ascending: false })
   ]);
@@ -569,9 +672,17 @@ async function fetchRemoteBoard(board) {
   if (examResult.error) throw examResult.error;
   if (noteResult.error) throw noteResult.error;
 
+  const remoteNotes = (noteResult.data || []).map(rowToNote).filter((note) => note.text);
+  if (remoteNotes.length > 1 && remoteNotes.every((note) => note.x === 32 && note.y === 32)) {
+    remoteNotes.forEach((note, index) => {
+      note.x = 32 + (index % 3) * 278;
+      note.y = 32 + Math.floor(index / 3) * 190;
+    });
+  }
+
   return {
     exams: normalizeExams((examResult.data || []).map(rowToExam), board),
-    notes: (noteResult.data || []).map(rowToNote).filter((note) => note.text)
+    notes: remoteNotes
   };
 }
 
@@ -588,16 +699,6 @@ async function saveRemoteBoard(board, nextExams, nextNotes) {
     const { error } = await supabaseClient.from("board_note_records").upsert(noteRows, { onConflict: "id" });
     if (error) throw error;
   }
-}
-
-async function replaceRemoteBoard(board, nextExams, nextNotes) {
-  const [examDelete, noteDelete] = await Promise.all([
-    supabaseClient.from("exam_records").delete().eq("board_id", board.id),
-    supabaseClient.from("board_note_records").delete().eq("board_id", board.id)
-  ]);
-  if (examDelete.error) throw examDelete.error;
-  if (noteDelete.error) throw noteDelete.error;
-  await saveRemoteBoard(board, nextExams, nextNotes);
 }
 
 async function deleteRemoteExam(id) {
@@ -689,7 +790,9 @@ function applyTheme(theme) {
   localStorage.setItem(THEME_KEY, activeTheme);
   if (el.themeToggle) {
     const isDark = activeTheme === "dark";
-    el.themeToggle.textContent = isDark ? "Modo claro" : "Modo escuro";
+    const label = isDark ? "Ativar modo claro" : "Ativar modo escuro";
+    el.themeToggle.setAttribute("aria-label", label);
+    el.themeToggle.title = label;
     el.themeToggle.setAttribute("aria-pressed", String(isDark));
   }
   if (el.themeColorMeta) {
@@ -729,6 +832,7 @@ function escapeHtml(value) {
 
 function statusFor(total) {
   const target = targetTotal();
+  if (target === null) return { label: "sem meta", className: "badge--unset" };
   const nearWindow = Math.max(2, Math.ceil(activeBoard.totalMax * 0.05));
   if (total >= target) return { label: "meta batida", className: "badge--hit" };
   if (total >= target - nearWindow) return { label: "perto", className: "badge--near" };
@@ -740,15 +844,17 @@ function drawProgressChart(canvas) {
   const data = exams.map((exam) => ({ ...exam, total: computeTotal(exam) })).filter((exam) => exam.total !== null);
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
-  const padding = { top: 22, right: 22, bottom: 56, left: 46 };
+  const padding = { top: 22, right: 22, bottom: 28, left: 46 };
   const plotW = width - padding.left - padding.right;
   const plotH = height - padding.top - padding.bottom;
   const max = activeBoard.totalMax;
   const target = targetTotal();
-  const min = data.length ? Math.max(0, Math.min(...data.map((exam) => exam.total), target) - Math.ceil(max * 0.07)) : 0;
+  const referenceValues = data.map((exam) => exam.total);
+  if (target !== null) referenceValues.push(target);
+  const min = referenceValues.length ? Math.max(0, Math.min(...referenceValues) - Math.ceil(max * 0.07)) : 0;
 
   ctx.clearRect(0, 0, width, height);
-  drawGrid(ctx, padding, width, height, [min, target, max], min, max);
+  drawGrid(ctx, padding, width, height, [...new Set([min, target, max].filter((value) => value !== null))], min, max);
 
   if (!data.length) {
     drawEmptyChart(ctx, width, height, `Sem provas de ${activeBoard.label}`);
@@ -761,14 +867,16 @@ function drawProgressChart(canvas) {
     y: padding.top + plotH - ((exam.total - min) / (max - min)) * plotH
   }));
 
-  const targetY = padding.top + plotH - ((target - min) / (max - min)) * plotH;
-  ctx.strokeStyle = cssVar("--green") || "#1f8a70";
-  ctx.setLineDash([8, 8]);
-  ctx.beginPath();
-  ctx.moveTo(padding.left, targetY);
-  ctx.lineTo(width - padding.right, targetY);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  if (target !== null) {
+    const targetY = padding.top + plotH - ((target - min) / (max - min)) * plotH;
+    ctx.strokeStyle = cssVar("--green") || "#1f8a70";
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, targetY);
+    ctx.lineTo(width - padding.right, targetY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   ctx.lineWidth = 3;
   ctx.strokeStyle = "#3772ff";
@@ -780,7 +888,9 @@ function drawProgressChart(canvas) {
   ctx.stroke();
 
   points.forEach((point) => {
-    ctx.fillStyle = point.exam.total >= target ? (cssVar("--green") || "#1f8a70") : (cssVar("--coral") || "#df6b57");
+    ctx.fillStyle = target !== null && point.exam.total >= target
+      ? (cssVar("--green") || "#1f8a70")
+      : (cssVar("--coral") || "#df6b57");
     ctx.beginPath();
     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
     ctx.fill();
@@ -791,17 +901,6 @@ function drawProgressChart(canvas) {
     ctx.fillText(point.exam.total, point.x, point.y - 11);
   });
 
-  ctx.fillStyle = cssVar("--muted") || "#63707a";
-  ctx.font = "700 10px system-ui";
-  ctx.textAlign = "right";
-  points.forEach((point, index) => {
-    if (index % Math.ceil(points.length / 6) !== 0 && index !== points.length - 1) return;
-    ctx.save();
-    ctx.translate(point.x, height - 16);
-    ctx.rotate(-0.45);
-    ctx.fillText(point.exam.prova, 0, 0);
-    ctx.restore();
-  });
 }
 
 function prepareCanvas(canvas) {
@@ -959,6 +1058,10 @@ function renderExamCarousel() {
               ${renderSecondaryTotal(exam)}
             </div>
           </div>
+          <div class="exam-score-card__note">
+            <span>Observação da prova</span>
+            <p>${exam.obs ? escapeHtml(exam.obs) : "Nenhuma observação registrada."}</p>
+          </div>
           <div class="area-bars">${rows}</div>
         </article>
       `;
@@ -987,18 +1090,25 @@ function toggleMapMode() {
 
 function renderBoardNotes() {
   if (!el.boardNotesCarousel) return;
+  if (el.notebookBoardLabel) el.notebookBoardLabel.textContent = activeBoard.label;
 
   if (!boardNotes.length) {
-    el.boardNotesCarousel.innerHTML = `<div class="notes-empty">Nenhuma observacao salva para ${escapeHtml(activeBoard.label)}.</div>`;
+    el.boardNotesCarousel.innerHTML = `
+      <div class="canvas-empty">
+        <span>01</span>
+        <strong>Canvas livre</strong>
+        <p>Crie a primeira nota de ${escapeHtml(activeBoard.label)}. Ela aparecerá aqui e poderá ser arrastada.</p>
+      </div>
+    `;
     return;
   }
 
   el.boardNotesCarousel.innerHTML = boardNotes
     .map((note) => `
-      <article class="note-card">
-        <div class="note-card__meta">
-          <span>${escapeHtml(activeBoard.label)} - ${escapeHtml(formatDate(note.createdAt))}</span>
-          <button class="button button--secondary table-action" type="button" data-note-action="delete" data-id="${note.id}">Excluir</button>
+      <article class="canvas-note" data-note-id="${note.id}" style="--note-x: ${Math.max(16, note.x || 32)}px; --note-y: ${Math.max(16, note.y || 32)}px;">
+        <div class="canvas-note__bar" data-note-drag="${note.id}">
+          <span>${escapeHtml(activeBoard.label)} // ${escapeHtml(formatDate(note.createdAt))}</span>
+          <button type="button" data-note-action="delete" data-id="${note.id}" aria-label="Excluir nota">×</button>
         </div>
         <p>${escapeHtml(note.text)}</p>
       </article>
@@ -1031,51 +1141,39 @@ function updateBoardTabs() {
 
 function renderTargets() {
   const target = targetTotal();
-  if (el.goalPercent) el.goalPercent.textContent = `${Math.round(TARGET_RATE * 100)}%`;
-  if (el.goalTotal) el.goalTotal.textContent = `${target} / ${activeBoard.totalMax}`;
-  if (el.goalMeterFill) el.goalMeterFill.style.width = `${Math.round(TARGET_RATE * 100)}%`;
-  el.chartGoalPill.textContent = `Meta ${target}`;
-  if (!el.targetList) return;
+  el.goalPercent.textContent = targetPercent === null ? "--" : String(targetPercent);
+  el.goalTotal.textContent = target === null
+    ? "Nenhuma meta definida"
+    : `${target} / ${activeBoard.totalMax} em ${activeBoard.label}`;
+  el.goalMeterFill.style.width = `${targetPercent || 0}%`;
+  el.goalNudge.hidden = targetPercent !== null;
+  el.chartGoalPill.textContent = target === null ? "Defina sua meta" : `Meta ${target}`;
+  el.chartGoalPill.classList.toggle("is-unset", target === null);
+  if (document.activeElement !== el.goalInput) el.goalInput.value = targetPercent ?? "";
+}
 
-  if (activeBoard.conversion === "unifesp-days") {
-    el.targetList.innerHTML = `
-      <div>
-        <span>Media convertida</span>
-        <strong>${target}/${activeBoard.totalMax}</strong>
-        <small>media entre Dia 1 e Dia 2, ambos em escala 0-100</small>
-      </div>
-      <div>
-        <span>Dia 1</span>
-        <strong>92/100</strong>
-        <small>Portugues + Ingles: acertos de 0-25 convertidos para 0-100</small>
-      </div>
-      <div>
-        <span>Dia 2</span>
-        <strong>92/100</strong>
-        <small>Biologia + Quimica + Fisica + Matematica: acertos de 0-20 convertidos para 0-100</small>
-      </div>
-    `;
+async function saveGoal(event) {
+  event.preventDefault();
+  const next = nullableScore(el.goalInput.value);
+  if (next === null || next < 1 || next > 100) {
+    setStatus("Defina uma meta entre 1% e 100%.", true);
+    el.goalInput.focus();
     return;
   }
-
-  const sectionTargets = activeBoard.sections
-    .map((section) => `
-      <div>
-        <span>${escapeHtml(section.label)}</span>
-        <strong>${Math.ceil(section.max * TARGET_RATE)}/${section.max}</strong>
-        <small>${section.countsTowardTotal === false ? "contagem separada" : "referencia de 92% nesse bloco"}</small>
-      </div>
-    `)
-    .join("");
-
-  el.targetList.innerHTML = `
-    <div>
-      <span>Total</span>
-      <strong>${target}/${activeBoard.totalMax}</strong>
-      <small>${activeBoard.note}</small>
-    </div>
-    ${sectionTargets}
-  `;
+  targetPercent = Math.round(next);
+  persistTargetPercent();
+  renderTargets();
+  drawCharts(true);
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteSettings();
+      setStatus(`Meta de ${targetPercent}% salva e sincronizada.`);
+    } catch {
+      setStatus(`Meta de ${targetPercent}% salva neste navegador; a sincronização falhou.`, true);
+    }
+  } else {
+    setStatus(`Meta de ${targetPercent}% salva neste navegador.`);
+  }
 }
 
 function renderScoreFields(exam = null) {
@@ -1230,60 +1328,6 @@ async function handleTableClick(event) {
   }
 }
 
-function exportData() {
-  const blob = new Blob([JSON.stringify(exams, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${activeBoard.id}-backup.json`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  setStatus(`${activeBoard.label}: backup exportado`);
-}
-
-function importData(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      const imported = JSON.parse(String(reader.result || "[]"));
-      if (!Array.isArray(imported)) throw new Error("Formato invalido");
-      exams = normalizeExams(imported);
-      persist();
-      if (isOnlineMode()) await replaceRemoteBoard(activeBoard, exams, boardNotes);
-      render();
-      resetForm();
-      setStatus(isOnlineMode() ? `${activeBoard.label}: backup importado e sincronizado` : `${activeBoard.label}: backup importado`);
-    } catch {
-      setStatus("Arquivo de backup invalido", true);
-    } finally {
-      el.importFile.value = "";
-    }
-  };
-  reader.readAsText(file);
-}
-
-async function resetData() {
-  const message = activeBoard.seed.length
-    ? `Restaurar a base inicial de ${activeBoard.label} e substituir os dados salvos neste navegador?`
-    : `Limpar as provas de ${activeBoard.label} salvas neste navegador?`;
-  if (!window.confirm(message)) return;
-  exams = cloneSeed(activeBoard);
-  persist();
-  if (isOnlineMode()) {
-    try {
-      await replaceRemoteBoard(activeBoard, exams, boardNotes);
-    } catch (error) {
-      setStatus(`Dados locais restaurados. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
-    }
-  }
-  render();
-  resetForm();
-  setStatus(activeBoard.seed.length ? `${activeBoard.label}: base inicial restaurada` : `${activeBoard.label}: tela limpa`);
-}
-
 async function switchBoard(boardId) {
   const nextBoard = boardById(boardId);
   if (!nextBoard || nextBoard.id === activeBoard.id) return;
@@ -1342,7 +1386,9 @@ async function saveBoardNote() {
     {
       id: crypto.randomUUID(),
       text,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      x: 32 + (boardNotes.length % 3) * 278,
+      y: 32 + Math.floor(boardNotes.length / 3) * 190
     },
     ...boardNotes
   ];
@@ -1377,6 +1423,61 @@ async function handleBoardNotesClick(event) {
   }
   renderBoardNotes();
   setStatus(`${activeBoard.label}: observacao excluida deste navegador`);
+}
+
+function startNoteDrag(event) {
+  if (event.button !== 0 || event.target.closest("button")) return;
+  const handle = event.target.closest("[data-note-drag]");
+  if (!handle) return;
+  const noteElement = handle.closest(".canvas-note");
+  const note = boardNotes.find((item) => item.id === handle.dataset.noteDrag);
+  if (!noteElement || !note) return;
+  noteDrag = {
+    id: note.id,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originX: note.x || 32,
+    originY: note.y || 32,
+    element: noteElement
+  };
+  noteElement.classList.add("is-dragging");
+  handle.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function moveNoteDrag(event) {
+  if (!noteDrag || event.pointerId !== noteDrag.pointerId) return;
+  const canvas = el.boardNotesCarousel;
+  const maxX = Math.max(16, canvas.clientWidth - noteDrag.element.offsetWidth - 16);
+  const maxY = Math.max(16, canvas.clientHeight - noteDrag.element.offsetHeight - 16);
+  const x = Math.max(16, Math.min(maxX, noteDrag.originX + event.clientX - noteDrag.startX));
+  const y = Math.max(16, Math.min(maxY, noteDrag.originY + event.clientY - noteDrag.startY));
+  noteDrag.element.style.setProperty("--note-x", `${Math.round(x)}px`);
+  noteDrag.element.style.setProperty("--note-y", `${Math.round(y)}px`);
+  noteDrag.x = x;
+  noteDrag.y = y;
+  event.preventDefault();
+}
+
+async function endNoteDrag(event) {
+  if (!noteDrag || event.pointerId !== noteDrag.pointerId) return;
+  const finished = noteDrag;
+  noteDrag = null;
+  finished.element.classList.remove("is-dragging");
+  if (finished.x === undefined || finished.y === undefined) return;
+  const note = boardNotes.find((item) => item.id === finished.id);
+  if (!note) return;
+  note.x = Math.round(finished.x);
+  note.y = Math.round(finished.y);
+  persistBoardNotes();
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteBoard(activeBoard, exams, boardNotes);
+    } catch {
+      setStatus("Posição salva neste navegador; a sincronização falhou.", true);
+    }
+  }
 }
 
 async function handleAuthSignIn(event) {
@@ -1428,17 +1529,25 @@ async function handleAuthSignOut() {
 }
 
 async function handleManualSync() {
-  if (!isOnlineMode()) return;
+  if (!isOnlineMode()) {
+    openAuthModal();
+    return;
+  }
   setSyncFeedback();
   el.syncNow.classList.add("is-syncing");
   setAuthBusy(true);
   try {
-    const synced = await syncAllBoards();
+    const [boardsSynced, settingsSynced] = await Promise.all([syncAllBoards(), syncUserSettings()]);
+    const synced = boardsSynced && settingsSynced;
     setSyncFeedback(synced ? "success" : "error");
   } finally {
     setAuthBusy(false);
     el.syncNow.classList.remove("is-syncing");
   }
+}
+
+function handleActivateSync() {
+  openAuthModal();
 }
 
 el.form.addEventListener("submit", saveForm);
@@ -1450,21 +1559,33 @@ el.authForm.addEventListener("submit", handleAuthSignIn);
 el.authSignup.addEventListener("click", handleAuthSignUp);
 el.authSignout.addEventListener("click", handleAuthSignOut);
 el.syncNow.addEventListener("click", handleManualSync);
+el.activateSync.addEventListener("click", handleActivateSync);
+el.authClose.addEventListener("click", closeAuthModal);
+el.authCloseBackdrop.addEventListener("click", closeAuthModal);
+el.goalForm.addEventListener("submit", saveGoal);
 el.saveBoardNote.addEventListener("click", saveBoardNote);
 el.clearBoardNote.addEventListener("click", clearBoardNote);
 el.boardNotesCarousel.addEventListener("click", handleBoardNotesClick);
-el.exportData.addEventListener("click", exportData);
-el.importData.addEventListener("click", () => el.importFile.click());
-el.importFile.addEventListener("change", () => importData(el.importFile.files?.[0]));
-el.resetData.addEventListener("click", resetData);
+el.boardNotesCarousel.addEventListener("pointerdown", startNoteDrag);
+document.addEventListener("pointermove", moveNoteDrag, { passive: false });
+document.addEventListener("pointerup", endNoteDrag);
+document.addEventListener("pointercancel", endNoteDrag);
+
+el.viewButtons.forEach((button) => {
+  button.addEventListener("click", () => switchView(button.dataset.viewTarget));
+});
 
 el.boardTabs.forEach((tab) => {
   tab.addEventListener("click", () => switchBoard(tab.dataset.board));
 });
 
 window.addEventListener("resize", scheduleChartResize, { passive: true });
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !el.authPanel.hidden) closeAuthModal();
+});
 
 applyTheme(activeTheme);
+switchView("home");
 render();
 updateFormTotal();
 updateStatusForBoard();

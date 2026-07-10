@@ -1,15 +1,15 @@
-# central-estudos
+# Vest.io
 
 Site estatico para acompanhar desempenho em simulados e provas antigas.
 
-## zane's performance
+## Painel pessoal de performance
 
-A versao atual permite cadastrar, editar, excluir, importar e exportar provas direto pelo site.
+A versao atual separa Inicio, Registros e Caderno. Permite cadastrar, editar e excluir provas, acompanhar graficos, definir uma meta pessoal e organizar notas em um canvas por vestibular.
 
 Sem Supabase configurado, os dados ficam salvos no navegador pelo `localStorage`.
-Com Supabase configurado, cada usuario entra na propria conta e sincroniza as provas/observacoes online.
+Com Supabase configurado, cada usuario entra na propria conta e sincroniza provas, observacoes, notas do caderno, posicoes do canvas e meta pessoal.
 
-Meta principal: 92% de acertos, ou 166 de 180 questoes.
+A meta comeca vazia e e definida pelo proprio usuario.
 
 ## Supabase
 

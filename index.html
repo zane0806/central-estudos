@@ -6,81 +6,221 @@
     <meta name="theme-color" content="#0b0b0a" id="theme-color-meta">
     <meta http-equiv="cache-control" content="no-cache">
     <meta http-equiv="pragma" content="no-cache">
-    <meta
-      name="description"
-      content="Vest.io — dashboard de performance para acompanhar provas, evolução e a meta de 92% de acertos."
-    >
+    <meta name="description" content="Vest.io — provas, evolução e estratégia para vestibulares.">
     <title>Vest.io — Performance nos vestibulares</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..900&family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260710-1">
+    <link rel="stylesheet" href="./styles.css?v=20260710-2">
   </head>
-  <body>
+  <body data-view="home">
+    <header class="site-header">
+      <button class="header-brand" type="button" data-view-target="home" aria-label="Ir para o início">
+        VEST.IO
+      </button>
+      <span class="header-tagline">PAINEL PESSOAL DE PERFORMANCE</span>
+
+      <nav class="header-nav" aria-label="Navegação principal">
+        <button class="header-icon is-active" type="button" data-view-target="home" aria-label="Início" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.7H14v-6h-4v6H3z"></path></svg>
+        </button>
+        <button class="header-icon" type="button" data-view-target="records" aria-label="Registros" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"></path></svg>
+        </button>
+        <button class="header-icon" type="button" data-view-target="notebook" aria-label="Caderno" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h13v18H6zM6 7H3m3 5H3m3 5H3m4-9h8m-8 4h8"></path></svg>
+        </button>
+        <button class="header-icon" type="button" id="theme-toggle" aria-label="Ativar modo claro" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8 8 0 0 1 8.8 3.8 8.5 8.5 0 1 0 20.2 15.2z"></path></svg>
+        </button>
+        <button class="header-icon sync-icon" type="button" id="sync-now" aria-label="Ativar sincronização" title="Ativar sincronização">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.2 9.1a8.2 8.2 0 0 0-14.1-3.2L4.5 7.5"></path>
+            <path d="M4.5 3.2v4.3h4.3"></path>
+            <path d="M3.8 14.9A8.2 8.2 0 0 0 17.9 18l1.6-1.5"></path>
+            <path d="M19.5 20.8v-4.3h-4.3"></path>
+          </svg>
+        </button>
+      </nav>
+    </header>
+
     <main class="shell">
-      <section class="hero" aria-labelledby="page-title">
-        <div class="hero__topline">
-          <a class="wordmark" href="#page-title" aria-label="Vest.io, início">VEST.IO</a>
-          <span>PAINEL PESSOAL DE PERFORMANCE</span>
-        </div>
-        <div class="hero__content">
-          <button class="sync-icon" type="button" id="sync-now" aria-label="Sincronizar dados" title="Sincronizar dados" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M20.2 9.1a8.2 8.2 0 0 0-14.1-3.2L4.5 7.5"></path>
-              <path d="M4.5 3.2v4.3h4.3"></path>
-              <path d="M3.8 14.9A8.2 8.2 0 0 0 17.9 18l1.6-1.5"></path>
-              <path d="M19.5 20.8v-4.3h-4.3"></path>
-            </svg>
-          </button>
-          <div class="hero__copy-block">
-            <p class="hero__kicker">ESTUDO COM DIREÇÃO // RESULTADO COM CONTEXTO</p>
-            <h1 id="page-title">Vest.io</h1>
-            <p class="hero__copy">Provas, evolução e estratégia.<br>Seu desempenho, sem ruído.</p>
-          </div>
-          <div class="hero__goal" aria-label="Meta atual">
-            <span>Meta de acertos</span>
-            <strong id="goal-percent">92%</strong>
-            <span id="goal-total">166 / 180</span>
-            <div class="goal-meter" aria-hidden="true">
-              <span class="goal-meter__fill" id="goal-meter-fill"></span>
+      <section class="app-view home-view" id="view-home" data-view="home" aria-labelledby="page-title">
+        <div class="hero">
+          <div class="hero__content">
+            <div class="hero__copy-block">
+              <p class="hero__kicker">ESTUDO COM DIREÇÃO // RESULTADO COM CONTEXTO</p>
+              <h1 id="page-title">Vest.io</h1>
+              <p class="hero__copy">Provas, evolução e estratégia.<br>Seu desempenho, sem ruído.</p>
+            </div>
+
+            <div class="hero__goal" aria-label="Configurar meta de acertos">
+              <div class="goal-label">
+                <span>Meta de acertos</span>
+                <span class="goal-nudge" id="goal-nudge">COMECE DEFININDO SUA META</span>
+              </div>
+              <div class="goal-value">
+                <strong id="goal-percent">--</strong><span>%</span>
+              </div>
+              <span class="goal-total" id="goal-total">Nenhuma meta definida</span>
+              <form class="goal-form" id="goal-form">
+                <label for="goal-input">Alterar meta</label>
+                <div>
+                  <input id="goal-input" name="goal" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Ex: 92" aria-describedby="goal-help">
+                  <span>%</span>
+                  <button type="submit">Salvar</button>
+                </div>
+                <small id="goal-help">Vale para todos os vestibulares e recalcula os gráficos.</small>
+              </form>
+              <div class="goal-meter" aria-hidden="true"><span class="goal-meter__fill" id="goal-meter-fill"></span></div>
+            </div>
+
+            <div class="hero__actions">
+              <button class="button button--primary" type="button" data-view-target="records">Abrir registros</button>
+              <button class="button button--theme" type="button" data-view-target="notebook">Abrir caderno</button>
+              <div class="home-sync">
+                <button class="home-sync__button" type="button" id="activate-sync">Ativar sincronização</button>
+                <span class="status" id="data-status" role="status" aria-live="polite">Dados salvos somente neste navegador.</span>
+              </div>
             </div>
           </div>
-          <div class="hero__actions">
-            <a class="button button--primary" href="#entry-card">
-              Registrar prova
-            </a>
-            <button class="button button--theme" type="button" id="theme-toggle" aria-pressed="false">
-              Modo claro
-            </button>
-            <span class="status" id="data-status" role="status" aria-live="polite">Dados salvos neste navegador</span>
-          </div>
         </div>
       </section>
 
-      <section class="board-switcher" aria-label="Escolher vestibular">
-        <button class="board-tab is-active" type="button" data-board="enem">ENEM</button>
-        <button class="board-tab" type="button" data-board="unesp">UNESP</button>
-        <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
-        <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
-        <button class="board-tab" type="button" data-board="unifesp">UNIFESP</button>
+      <section class="app-view records-view" id="view-records" data-view="records" aria-label="Registros de provas" hidden>
+        <section class="board-switcher" aria-label="Escolher vestibular nos registros">
+          <button class="board-tab is-active" type="button" data-board="enem">ENEM</button>
+          <button class="board-tab" type="button" data-board="unesp">UNESP</button>
+          <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
+          <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
+          <button class="board-tab" type="button" data-board="unifesp">UNIFESP</button>
+        </section>
+
+        <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">01 // LANÇAR DADOS</p>
+              <h2 id="entry-title">Nova prova</h2>
+            </div>
+          </div>
+
+          <form class="exam-form" id="exam-form">
+            <input type="hidden" id="exam-id">
+            <label>
+              Prova
+              <input id="exam-name" name="prova" type="text" placeholder="Ex: ENEM 2025 PPL" required>
+            </label>
+            <div class="score-fields" id="score-fields"></div>
+            <label class="exam-form__wide">
+              Observações da prova
+              <input id="exam-notes" name="obs" type="text" placeholder="Estratégia, dificuldade ou assunto para revisar">
+            </label>
+            <div class="form-total" aria-live="polite">
+              <span>Total</span>
+              <strong id="form-total">0/180</strong>
+            </div>
+            <div class="form-submit">
+              <button class="button button--primary-dark" type="submit" id="save-exam">Salvar prova</button>
+              <button class="button button--secondary" type="button" id="cancel-edit" hidden>Cancelar edição</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="dashboard records-dashboard">
+          <article class="chart-card chart-card--wide">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">02 // TRAJETÓRIA</p>
+                <h2>Evolução por prova</h2>
+              </div>
+              <button class="pill pill--action" type="button" id="chart-goal-pill" data-view-target="home">Defina sua meta</button>
+            </div>
+            <canvas id="progress-chart" height="260" aria-label="Gráfico de evolução por prova"></canvas>
+          </article>
+
+          <article class="chart-card exam-carousel-card">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">03 // DIAGNÓSTICO</p>
+                <h2>Mapa de cada prova</h2>
+              </div>
+              <div class="map-mode-control">
+                <span>acertos/erros</span>
+                <button class="map-mode-toggle is-active" type="button" id="map-mode-toggle" aria-pressed="true" aria-label="Alternar entre acertos e erros"><span aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <div class="exam-carousel" id="exam-carousel" aria-label="Gráficos por prova"></div>
+          </article>
+        </section>
+
+        <section class="table-section" aria-labelledby="table-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">04 // ARQUIVO</p>
+              <h2 id="table-title">Provas registradas</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Prova</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="exam-table"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
-      <section class="auth-panel" id="auth-panel" aria-labelledby="auth-title" hidden>
+      <section class="app-view notebook-view" id="view-notebook" data-view="notebook" aria-labelledby="notebook-title" hidden>
+        <div class="notebook-intro">
+          <p class="eyebrow">CADERNO // PENSAMENTO EM PROCESSO</p>
+          <h2 id="notebook-title">Mesa de estudo</h2>
+          <p>Registre revisões, estratégias e ideias. Arraste cada nota para organizar o seu espaço.</p>
+        </div>
+
+        <section class="board-switcher board-switcher--notebook" aria-label="Escolher vestibular no caderno">
+          <button class="board-tab is-active" type="button" data-board="enem">ENEM</button>
+          <button class="board-tab" type="button" data-board="unesp">UNESP</button>
+          <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
+          <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
+          <button class="board-tab" type="button" data-board="unifesp">UNIFESP</button>
+        </section>
+
+        <div class="notebook-workspace">
+          <aside class="notebook-composer">
+            <div>
+              <p class="eyebrow">NOVA NOTA</p>
+              <h3 id="notebook-board-label">ENEM</h3>
+            </div>
+            <label class="board-notes__editor">
+              <span>Conteúdo</span>
+              <textarea id="board-note-text" placeholder="O que precisa permanecer à vista?"></textarea>
+            </label>
+            <div class="board-notes__actions">
+              <button class="button button--primary-dark" type="button" id="save-board-note">Adicionar ao canvas</button>
+              <button class="button button--secondary" type="button" id="clear-board-note">Limpar</button>
+            </div>
+            <small>As notas ficam privadas no navegador e, com sincronização ativa, na sua conta.</small>
+          </aside>
+
+          <div class="notebook-canvas-wrap" aria-label="Canvas de anotações">
+            <div class="notebook-canvas" id="board-notes-carousel"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="auth-modal" id="auth-panel" aria-labelledby="auth-title" aria-modal="true" role="dialog" hidden>
+      <button class="auth-modal__backdrop" type="button" id="auth-close-backdrop" aria-label="Fechar sincronização"></button>
+      <div class="auth-modal__panel">
+        <button class="auth-modal__close" type="button" id="auth-close" aria-label="Fechar">×</button>
         <div>
-          <p class="eyebrow">conta online</p>
+          <p class="eyebrow">CONTA PRIVADA</p>
           <h2 id="auth-title">Sincronização</h2>
-          <p class="auth-status" id="auth-status">Sem login, cada prova fica somente neste navegador.</p>
+          <p class="auth-status" id="auth-status">Entre para acessar os mesmos dados no celular e no computador.</p>
         </div>
 
         <form class="auth-form" id="auth-form">
-          <label>
-            Email
-            <input id="auth-email" name="email" type="email" autocomplete="email" placeholder="seu@email.com">
-          </label>
-          <label>
-            Senha
-            <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres">
-          </label>
+          <label>Email<input id="auth-email" name="email" type="email" autocomplete="email" placeholder="seu@email.com"></label>
+          <label>Senha<input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></label>
           <div class="auth-actions">
             <button class="button button--primary-dark" type="submit" id="auth-signin">Entrar</button>
             <button class="button button--secondary" type="button" id="auth-signup">Criar conta</button>
@@ -88,128 +228,14 @@
         </form>
 
         <div class="auth-session" id="auth-session" hidden>
-          <strong id="auth-user-email"></strong>
-          <div class="auth-actions">
-            <button class="button button--secondary" type="button" id="auth-signout">Sair</button>
-          </div>
+          <div><span>Conta conectada</span><strong id="auth-user-email"></strong></div>
+          <button class="button button--secondary" type="button" id="auth-signout">Sair</button>
         </div>
-      </section>
-
-      <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">01 // LANÇAR DADOS</p>
-            <h2 id="entry-title">Nova prova</h2>
-          </div>
-          <div class="entry-actions">
-            <button class="button button--secondary" type="button" id="export-data">Exportar</button>
-            <button class="button button--secondary" type="button" id="import-data">Importar</button>
-            <button class="button button--ghost" type="button" id="reset-data">Restaurar base</button>
-            <input id="import-file" type="file" accept="application/json" hidden>
-          </div>
-        </div>
-
-        <form class="exam-form" id="exam-form">
-          <input type="hidden" id="exam-id">
-          <label>
-            Prova
-            <input id="exam-name" name="prova" type="text" placeholder="Ex: ENEM 2025 PPL" required>
-          </label>
-          <div class="score-fields" id="score-fields"></div>
-          <label class="exam-form__wide">
-            Observações
-            <input id="exam-notes" name="obs" type="text" placeholder="Opcional">
-          </label>
-          <div class="form-total" aria-live="polite">
-            <span>Total</span>
-            <strong id="form-total">0/180</strong>
-          </div>
-          <div class="form-submit">
-            <button class="button button--primary-dark" type="submit" id="save-exam">Salvar prova</button>
-            <button class="button button--secondary" type="button" id="cancel-edit" hidden>Cancelar edição</button>
-          </div>
-        </form>
-      </section>
-
-      <section class="dashboard">
-        <article class="chart-card chart-card--wide">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">02 // TRAJETÓRIA</p>
-              <h2>Evolução por prova</h2>
-            </div>
-            <span class="pill" id="chart-goal-pill">Meta 166</span>
-          </div>
-          <canvas id="progress-chart" height="260" aria-label="Grafico de evolucao por prova"></canvas>
-        </article>
-
-        <article class="chart-card exam-carousel-card">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">03 // DIAGNÓSTICO</p>
-              <h2>Mapa de cada prova</h2>
-            </div>
-            <div class="map-mode-control">
-              <span>acertos/erros</span>
-              <button class="map-mode-toggle is-active" type="button" id="map-mode-toggle" aria-pressed="true" aria-label="Alternar entre acertos e erros">
-                <span aria-hidden="true"></span>
-              </button>
-            </div>
-          </div>
-          <div class="exam-carousel" id="exam-carousel" aria-label="Graficos por prova"></div>
-        </article>
-
-        <article class="notes-card">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">04 // CADERNO</p>
-              <h2>Observações gerais</h2>
-            </div>
-            <span class="pill">rolagem</span>
-          </div>
-          <div class="board-notes">
-            <label class="board-notes__editor">
-              <span>Nova observação</span>
-              <textarea id="board-note-text" placeholder="Anote estratégia, assuntos para revisar ou qualquer observação desse vestibular."></textarea>
-            </label>
-            <div class="board-notes__actions">
-              <button class="button button--primary-dark" type="button" id="save-board-note">Salvar observação</button>
-              <button class="button button--secondary" type="button" id="clear-board-note">Limpar texto</button>
-            </div>
-            <div class="notes-carousel" id="board-notes-carousel" aria-label="Observacoes salvas"></div>
-          </div>
-        </article>
-      </section>
-
-      <section class="table-section" aria-labelledby="table-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">05 // ARQUIVO</p>
-            <h2 id="table-title">Provas registradas</h2>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Prova</th>
-                <th>Humanas</th>
-                <th>Linguagens</th>
-                <th>Matemática</th>
-                <th>Natureza</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="exam-table"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+      </div>
+    </section>
 
     <script src="./supabase-config.js?v=20260706-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2"></script>
-    <script src="./app.js?v=20260710-1"></script>
+    <script src="./app.js?v=20260710-2"></script>
   </body>
 </html>
