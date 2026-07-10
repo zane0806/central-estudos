@@ -1,8 +1,8 @@
-# Vest.io / Z.Vest - proximas melhorias
+# Vest.io - proximas melhorias
 
 ## Prioridade alta
 
-- Conferir visual no celular depois de cada ajuste de hero, switch, graficos e carrossel.
+- [x] Conferir visual no celular depois do redesign do hero, switch, graficos e carrossel.
 - Melhorar feedback de sync:
   - mostrar sucesso discreto depois do clique no icone;
   - mostrar erro amigavel se Supabase falhar;

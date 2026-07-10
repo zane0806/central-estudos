@@ -3,19 +3,26 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#101418" id="theme-color-meta">
+    <meta name="theme-color" content="#0b0b0a" id="theme-color-meta">
     <meta http-equiv="cache-control" content="no-cache">
     <meta http-equiv="pragma" content="no-cache">
     <meta
       name="description"
-      content="Dashboard de estudos para acompanhar notas, provas antigas e a meta de 92% de acertos."
+      content="Vest.io — dashboard de performance para acompanhar provas, evolução e a meta de 92% de acertos."
     >
-    <title>Z.Vest</title>
-    <link rel="stylesheet" href="./styles.css?v=20260709-1">
+    <title>Vest.io — Performance nos vestibulares</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260710-1">
   </head>
   <body>
     <main class="shell">
       <section class="hero" aria-labelledby="page-title">
+        <div class="hero__topline">
+          <a class="wordmark" href="#page-title" aria-label="Vest.io, início">VEST.IO</a>
+          <span>PAINEL PESSOAL DE PERFORMANCE</span>
+        </div>
         <div class="hero__content">
           <button class="sync-icon" type="button" id="sync-now" aria-label="Sincronizar dados" title="Sincronizar dados" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -25,13 +32,25 @@
               <path d="M19.5 20.8v-4.3h-4.3"></path>
             </svg>
           </button>
-          <h1 id="page-title">Z.Vest</h1>
+          <div class="hero__copy-block">
+            <p class="hero__kicker">ESTUDO COM DIREÇÃO // RESULTADO COM CONTEXTO</p>
+            <h1 id="page-title">Vest.io</h1>
+            <p class="hero__copy">Provas, evolução e estratégia.<br>Seu desempenho, sem ruído.</p>
+          </div>
+          <div class="hero__goal" aria-label="Meta atual">
+            <span>Meta de acertos</span>
+            <strong id="goal-percent">92%</strong>
+            <span id="goal-total">166 / 180</span>
+            <div class="goal-meter" aria-hidden="true">
+              <span class="goal-meter__fill" id="goal-meter-fill"></span>
+            </div>
+          </div>
           <div class="hero__actions">
             <a class="button button--primary" href="#entry-card">
               Registrar prova
             </a>
             <button class="button button--theme" type="button" id="theme-toggle" aria-pressed="false">
-              Modo escuro
+              Modo claro
             </button>
             <span class="status" id="data-status" role="status" aria-live="polite">Dados salvos neste navegador</span>
           </div>
@@ -49,7 +68,7 @@
       <section class="auth-panel" id="auth-panel" aria-labelledby="auth-title" hidden>
         <div>
           <p class="eyebrow">conta online</p>
-          <h2 id="auth-title">Sincronizacao</h2>
+          <h2 id="auth-title">Sincronização</h2>
           <p class="auth-status" id="auth-status">Sem login, cada prova fica somente neste navegador.</p>
         </div>
 
@@ -60,7 +79,7 @@
           </label>
           <label>
             Senha
-            <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Minimo 6 caracteres">
+            <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres">
           </label>
           <div class="auth-actions">
             <button class="button button--primary-dark" type="submit" id="auth-signin">Entrar</button>
@@ -79,7 +98,7 @@
       <section class="entry-section" id="entry-card" aria-labelledby="entry-title">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">lancar dados</p>
+            <p class="eyebrow">01 // LANÇAR DADOS</p>
             <h2 id="entry-title">Nova prova</h2>
           </div>
           <div class="entry-actions">
@@ -98,7 +117,7 @@
           </label>
           <div class="score-fields" id="score-fields"></div>
           <label class="exam-form__wide">
-            Observacoes
+            Observações
             <input id="exam-notes" name="obs" type="text" placeholder="Opcional">
           </label>
           <div class="form-total" aria-live="polite">
@@ -107,7 +126,7 @@
           </div>
           <div class="form-submit">
             <button class="button button--primary-dark" type="submit" id="save-exam">Salvar prova</button>
-            <button class="button button--secondary" type="button" id="cancel-edit" hidden>Cancelar edicao</button>
+            <button class="button button--secondary" type="button" id="cancel-edit" hidden>Cancelar edição</button>
           </div>
         </form>
       </section>
@@ -116,8 +135,8 @@
         <article class="chart-card chart-card--wide">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">provas antigas</p>
-              <h2>Evolucao por prova</h2>
+              <p class="eyebrow">02 // TRAJETÓRIA</p>
+              <h2>Evolução por prova</h2>
             </div>
             <span class="pill" id="chart-goal-pill">Meta 166</span>
           </div>
@@ -127,7 +146,7 @@
         <article class="chart-card exam-carousel-card">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">por prova</p>
+              <p class="eyebrow">03 // DIAGNÓSTICO</p>
               <h2>Mapa de cada prova</h2>
             </div>
             <div class="map-mode-control">
@@ -143,18 +162,18 @@
         <article class="notes-card">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">caderno</p>
-              <h2>Observacoes gerais</h2>
+              <p class="eyebrow">04 // CADERNO</p>
+              <h2>Observações gerais</h2>
             </div>
             <span class="pill">rolagem</span>
           </div>
           <div class="board-notes">
             <label class="board-notes__editor">
-              <span>Nova observacao</span>
-              <textarea id="board-note-text" placeholder="Anote estrategia, assuntos para revisar ou qualquer observacao desse vestibular."></textarea>
+              <span>Nova observação</span>
+              <textarea id="board-note-text" placeholder="Anote estratégia, assuntos para revisar ou qualquer observação desse vestibular."></textarea>
             </label>
             <div class="board-notes__actions">
-              <button class="button button--primary-dark" type="button" id="save-board-note">Salvar observacao</button>
+              <button class="button button--primary-dark" type="button" id="save-board-note">Salvar observação</button>
               <button class="button button--secondary" type="button" id="clear-board-note">Limpar texto</button>
             </div>
             <div class="notes-carousel" id="board-notes-carousel" aria-label="Observacoes salvas"></div>
@@ -165,7 +184,7 @@
       <section class="table-section" aria-labelledby="table-title">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">historico</p>
+            <p class="eyebrow">05 // ARQUIVO</p>
             <h2 id="table-title">Provas registradas</h2>
           </div>
         </div>
@@ -176,11 +195,11 @@
                 <th>Prova</th>
                 <th>Humanas</th>
                 <th>Linguagens</th>
-                <th>Matematica</th>
+                <th>Matemática</th>
                 <th>Natureza</th>
                 <th>Total</th>
                 <th>Status</th>
-                <th>Acoes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="exam-table"></tbody>
@@ -191,6 +210,6 @@
 
     <script src="./supabase-config.js?v=20260706-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2"></script>
-    <script src="./app.js?v=20260709-1"></script>
+    <script src="./app.js?v=20260710-1"></script>
   </body>
 </html>

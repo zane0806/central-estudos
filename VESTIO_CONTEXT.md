@@ -166,6 +166,18 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 - Ao publicar, usar o Git embutido do Codex se `git` nao estiver no PATH.
 - A rede do sandbox costuma bloquear GitHub; pode ser necessario pedir permissao para `git push` e para verificar Pages.
 
+## Identidade visual atual (10/07/2026)
+
+- Nome oficial: `Vest.io`.
+- Dark mode e o padrao; light mode continua disponivel pelo botao no hero.
+- Direcao visual editorial e tecnologica, inspirada sem copia em LABASAD, Oryzo e Units.
+- Tipografia:
+  - `Bebas Neue` para titulos e numeros de impacto;
+  - `Archivo` para interface, formularios e textos.
+- Hero usa `assets/hero.jpg` em tela cheia, texto branco direto sobre a imagem e meta de 92% em destaque.
+- Interface usa grade reta, divisorias finas, pouco arredondamento e vermelho como cor de assinatura.
+- Responsividade revisada em desktop e celular (375 px), sem overflow horizontal da pagina.
+
 ## Historico recente de mudancas
 
 - `7e9e352`: inversao do sentido de rotacao do icone de sync.
@@ -179,9 +191,9 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 
 ## Prompt curto para iniciar um novo chat no Projeto Vest.io
 
-Continue o projeto `Z.Vest` (`central-estudos`) no repo local:
+Continue o projeto `Vest.io` (`central-estudos`) no repo local:
 
-`C:\Users\Gabriel\Documents\Codex\2026-07-03\cria-um-novo-site-em-um\central-estudos`
+`C:\Users\Gabriel\Documents\Vest.io\central-estudos`
 
 Site publicado:
 

@@ -39,7 +39,7 @@ const boards = [
     sections: [
       { key: "humanas", label: "Humanas", max: 45, color: colors.green },
       { key: "linguagens", label: "Linguagens", max: 45, color: colors.blue },
-      { key: "matematica", label: "Matematica", max: 45, color: colors.coral },
+      { key: "matematica", label: "Matemática", max: 45, color: colors.coral },
       { key: "natureza", label: "Natureza", max: 45, color: colors.gold }
     ]
   },
@@ -51,17 +51,17 @@ const boards = [
     placeholder: "Ex: UNESP 2026 - 1a fase",
     note: "1a fase: 90 objetivas; distribuicao por disciplina para controle pessoal",
     sections: [
-      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
+      { key: "portugues", label: "Português", max: 10, color: colors.blue },
       { key: "literatura", label: "Literatura", max: 8, color: colors.violet },
       { key: "artes", label: "Artes", max: 2, color: colors.pink },
-      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
+      { key: "ingles", label: "Inglês", max: 10, color: colors.teal },
       { key: "historia", label: "Historia", max: 10, color: colors.green },
       { key: "geografia", label: "Geografia", max: 10, color: colors.olive },
       { key: "filosofia_sociologia", label: "Filo/Socio", max: 10, color: colors.slate },
       { key: "biologia", label: "Biologia", max: 8, color: colors.gold },
-      { key: "quimica", label: "Quimica", max: 7, color: colors.red },
-      { key: "fisica", label: "Fisica", max: 7, color: colors.coral },
-      { key: "matematica", label: "Matematica", max: 8, color: colors.blue }
+      { key: "quimica", label: "Química", max: 7, color: colors.red },
+      { key: "fisica", label: "Física", max: 7, color: colors.coral },
+      { key: "matematica", label: "Matemática", max: 8, color: colors.blue }
     ]
   },
   {
@@ -72,13 +72,13 @@ const boards = [
     placeholder: "Ex: FAMEMA 2026 - objetiva",
     note: "Prova II objetiva; discursivas de quimica/biologia aparecem em contagem separada",
     sections: [
-      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
-      { key: "matematica", label: "Matematica", max: 10, color: colors.coral },
+      { key: "portugues", label: "Português", max: 10, color: colors.blue },
+      { key: "matematica", label: "Matemática", max: 10, color: colors.coral },
       { key: "geografia", label: "Geografia", max: 5, color: colors.olive },
       { key: "historia", label: "Historia", max: 5, color: colors.green },
-      { key: "ingles", label: "Ingles", max: 5, color: colors.teal },
-      { key: "fisica", label: "Fisica", max: 5, color: colors.gold },
-      { key: "disc_quimica", label: "Disc. Quimica", max: 4, color: colors.red, countsTowardTotal: false },
+      { key: "ingles", label: "Inglês", max: 5, color: colors.teal },
+      { key: "fisica", label: "Física", max: 5, color: colors.gold },
+      { key: "disc_quimica", label: "Disc. Química", max: 4, color: colors.red, countsTowardTotal: false },
       { key: "disc_biologia", label: "Disc. Biologia", max: 4, color: colors.gold, countsTowardTotal: false }
     ]
   },
@@ -90,14 +90,14 @@ const boards = [
     placeholder: "Ex: FAMERP 2026 - Conhecimentos Gerais",
     note: "Conhecimentos Gerais: 80 objetivas, 10 por disciplina",
     sections: [
-      { key: "portugues", label: "Portugues", max: 10, color: colors.blue },
-      { key: "ingles", label: "Ingles", max: 10, color: colors.teal },
+      { key: "portugues", label: "Português", max: 10, color: colors.blue },
+      { key: "ingles", label: "Inglês", max: 10, color: colors.teal },
       { key: "historia", label: "Historia", max: 10, color: colors.green },
       { key: "geografia", label: "Geografia", max: 10, color: colors.olive },
       { key: "biologia", label: "Biologia", max: 10, color: colors.gold },
-      { key: "quimica", label: "Quimica", max: 10, color: colors.red },
-      { key: "fisica", label: "Fisica", max: 10, color: colors.coral },
-      { key: "matematica", label: "Matematica", max: 10, color: colors.blue }
+      { key: "quimica", label: "Química", max: 10, color: colors.red },
+      { key: "fisica", label: "Física", max: 10, color: colors.coral },
+      { key: "matematica", label: "Matemática", max: 10, color: colors.blue }
     ]
   },
   {
@@ -109,12 +109,12 @@ const boards = [
     placeholder: "Ex: UNIFESP 2026 - complementares",
     note: "Notas convertidas: Dia 1 e Dia 2 em escala de 0 a 100",
     sections: [
-      { key: "portugues", label: "Portugues", max: 15, color: colors.blue, group: "dia1" },
-      { key: "ingles", label: "Ingles", max: 10, color: colors.teal, group: "dia1" },
+      { key: "portugues", label: "Português", max: 15, color: colors.blue, group: "dia1" },
+      { key: "ingles", label: "Inglês", max: 10, color: colors.teal, group: "dia1" },
       { key: "biologia", label: "Biologia", max: 5, color: colors.gold, group: "dia2" },
-      { key: "quimica", label: "Quimica", max: 5, color: colors.red, group: "dia2" },
-      { key: "fisica", label: "Fisica", max: 5, color: colors.coral, group: "dia2" },
-      { key: "matematica", label: "Matematica", max: 5, color: colors.blue, group: "dia2" }
+      { key: "quimica", label: "Química", max: 5, color: colors.red, group: "dia2" },
+      { key: "fisica", label: "Física", max: 5, color: colors.coral, group: "dia2" },
+      { key: "matematica", label: "Matemática", max: 5, color: colors.blue, group: "dia2" }
     ]
   }
 ];
@@ -166,7 +166,7 @@ const el = {
 let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
 let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
-let activeTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+let activeTheme = localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
 let mapMode = localStorage.getItem(MAP_MODE_KEY) === "errors" ? "errors" : "scores";
 let supabaseClient = null;
 let currentUser = null;
@@ -693,7 +693,7 @@ function applyTheme(theme) {
     el.themeToggle.setAttribute("aria-pressed", String(isDark));
   }
   if (el.themeColorMeta) {
-    el.themeColorMeta.setAttribute("content", activeTheme === "dark" ? "#0d1114" : "#101418");
+    el.themeColorMeta.setAttribute("content", activeTheme === "dark" ? "#0b0b0a" : "#f2efe8");
   }
   drawCharts(true);
 }
@@ -857,7 +857,7 @@ function renderTable() {
     ${columns.map((section) => `<th>${escapeHtml(section.label)}</th>`).join("")}
     <th>Total</th>
     <th>Status</th>
-    <th>Acoes</th>
+    <th>Ações</th>
   `;
 
   if (!rows.length) {
