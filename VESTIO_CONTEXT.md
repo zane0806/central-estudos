@@ -34,6 +34,8 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 - Tabelas:
   - `public.exam_records`
   - `public.board_note_records`
+  - `public.essay_records`
+  - `public.board_canvas_records`
   - `public.user_settings`
 - Schema esta em `supabase-schema.sql`.
 - RLS esta ativado. Cada usuario autenticado so pode selecionar/inserir/alterar/deletar as proprias linhas com `auth.uid() = user_id`.
@@ -60,13 +62,17 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
 - O botao de sincronizar fica no cabecalho. Deslogado, abre o modal privado; logado, sincroniza diretamente.
 - O icone sincroniza todos os vestibulares e gira enquanto carrega.
 - A animacao atual gira no sentido inverso: `rotate(-360deg)`.
-- Existe modo claro/escuro.
+- Existe modo claro/escuro; o icone alterna visualmente entre lua e sol.
 - Existe seletor de vestibular: ENEM, UNESP, FAMEMA, FAMERP, UNIFESP.
 - O login fica em modal e nao ocupa espaco permanente para usuarios conectados.
 - A meta de acertos e configuravel, inicia vazia e fica em `localStorage` e em `user_settings` quando ha conta.
 - A meta alimenta os status, o total-alvo e a linha verde do grafico.
 - O Caderno e uma tela separada com canvas quadriculado e notas arrastaveis por vestibular.
+- Notas do Caderno aceitam cor, tamanho de fonte, negrito e sublinhado.
+- O canvas permite ligar cards com fios e desenhar livremente em modo caneta.
+- Fios e tracos ficam em `board_canvas_records` como estado vetorial JSON privado por usuario/vestibular.
 - Posicoes das notas usam `position_x` e `position_y` em `board_note_records`.
+- A secao de redacao registra tema, nota e observacao, com escalas ENEM 1000, UNESP 28, FAMEMA 11, FAMERP 20 e UNIFESP 50.
 
 ## Vestibulares e regras
 
@@ -160,6 +166,18 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
   - `central-estudos.theme.v1`
   - `central-estudos.map-mode.v1`
   - `central-estudos.target-percent.v1`
+  - `central-estudos.essay-records.v1.<vestibular>`
+  - `central-estudos.canvas-state.v1.<vestibular>`
+- O Caderno tambem possui uma mesa `GERAL`, sem vinculo com vestibular, salva sob o id `general`.
+- Cards do canvas aceitam cor, tipografia, checklist, redimensionamento, conexoes e posicionamento livre.
+- As conexoes sao criadas arrastando o ponto lateral de um card ate outro; nao ha botao nem modo separado de conexao.
+- Um card e criado com duplo clique ou dois toques rapidos diretamente na grade; nao existe mais formulario lateral.
+- O texto e editado dentro do proprio card, e o lapis no cabecalho abre cor, tamanho (10-48 px), negrito, sublinhado e checklist com pre-visualizacao imediata.
+- O fundo da mesa pode ser arrastado com mouse ou toque para navegar pelo canvas ampliado.
+- A instrucao de duplo clique possui um botao de fechar protegido do gesto de arrastar a mesa e, depois de dispensada, fica oculta permanentemente em todas as mesas pelo `localStorage` global; em `file://`, ela ainda fecha mesmo se o navegador bloquear o storage.
+- A mesa aceita caneta e setas livres com uma paleta predefinida; o estado sincronizado inclui `links`, `strokes` e `arrows`.
+- Caneta e setas sao renderizadas em uma camada acima dos cards; as conexoes permanecem abaixo deles.
+- A animacao de entrada usa um identificador efemero e afeta somente o card recem-criado.
 - Se Supabase estiver configurado e o usuario estiver logado, o site sincroniza dados entre celular e PC.
 - Se nao estiver logado, o site salva apenas localmente naquele navegador.
 
@@ -182,8 +200,11 @@ Use este arquivo como contexto fixo do Projeto `Vest.io`.
   - `Bebas Neue` para titulos e numeros de impacto;
   - `Archivo` para interface, formularios e textos.
 - Hero usa `assets/hero.jpg` em tela cheia, texto branco direto sobre a imagem e meta configuravel em destaque.
+- O kicker atual do hero e `ANALISE SEUS RESULTADOS // AGORA MAIS AESTHETIC`; o antigo paragrafo descritivo foi removido.
 - Interface usa grade reta, divisorias finas, pouco arredondamento e vermelho como cor de assinatura.
 - Responsividade revisada em desktop e celular (375 px), sem overflow horizontal da pagina.
+- A pagina inicial nao exibe os atalhos de navegacao do cabecalho; eles aparecem somente nas areas internas.
+- O grafico ENEM por disciplina ajusta o limite inferior do eixo aos resultados registrados, mantendo a escala maxima de 45.
 
 ## Historico recente de mudancas
 

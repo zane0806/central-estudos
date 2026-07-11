@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,300..900&family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260710-2">
+    <link rel="stylesheet" href="./styles.css?v=20260710-10">
   </head>
   <body data-view="home">
     <header class="site-header">
@@ -30,8 +30,9 @@
         <button class="header-icon" type="button" data-view-target="notebook" aria-label="Caderno" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h13v18H6zM6 7H3m3 5H3m3 5H3m4-9h8m-8 4h8"></path></svg>
         </button>
-        <button class="header-icon" type="button" id="theme-toggle" aria-label="Ativar modo claro" aria-pressed="true">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8 8 0 0 1 8.8 3.8 8.5 8.5 0 1 0 20.2 15.2z"></path></svg>
+        <button class="header-icon header-utility-start" type="button" id="theme-toggle" aria-label="Ativar modo claro" aria-pressed="true">
+          <svg data-theme-icon="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8 8 0 0 1 8.8 3.8 8.5 8.5 0 1 0 20.2 15.2z"></path></svg>
+          <svg data-theme-icon="sun" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
         </button>
         <button class="header-icon sync-icon" type="button" id="sync-now" aria-label="Ativar sincronização" title="Ativar sincronização">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -49,9 +50,8 @@
         <div class="hero">
           <div class="hero__content">
             <div class="hero__copy-block">
-              <p class="hero__kicker">ESTUDO COM DIREÇÃO // RESULTADO COM CONTEXTO</p>
+              <p class="hero__kicker">ANALISE SEUS RESULTADOS // AGORA MAIS AESTHETIC</p>
               <h1 id="page-title">Vest.io</h1>
-              <p class="hero__copy">Provas, evolução e estratégia.<br>Seu desempenho, sem ruído.</p>
             </div>
 
             <div class="hero__goal" aria-label="Configurar meta de acertos">
@@ -151,12 +151,40 @@
             </div>
             <div class="exam-carousel" id="exam-carousel" aria-label="Gráficos por prova"></div>
           </article>
+
+          <article class="chart-card chart-card--wide enem-subject-chart" id="enem-subject-chart-card" hidden>
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">03.1 // POR ÁREA</p>
+                <h2>Evolução por disciplina</h2>
+              </div>
+              <div class="chart-legend" id="enem-subject-legend" aria-label="Legenda do gráfico"></div>
+            </div>
+            <canvas id="enem-subject-chart" height="300" aria-label="Gráfico de acertos por disciplina do ENEM, de zero a quarenta e cinco"></canvas>
+          </article>
+        </section>
+
+        <section class="essay-section" aria-labelledby="essay-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">04 // REDAÇÃO</p>
+              <h2 id="essay-title">Notas de redação</h2>
+            </div>
+            <span class="essay-scale" id="essay-scale">ESCALA 0–1000</span>
+          </div>
+          <form class="essay-form" id="essay-form">
+            <label>Tema<input id="essay-theme" type="text" placeholder="Tema da redação" required></label>
+            <label>Nota<input id="essay-score" type="text" inputmode="decimal" placeholder="0–1000" required></label>
+            <label class="essay-form__wide">Observação<input id="essay-observation" type="text" placeholder="Ponto forte, falha recorrente ou orientação da correção"></label>
+            <button class="button button--primary-dark" type="submit">Registrar nota</button>
+          </form>
+          <div class="essay-list" id="essay-list" aria-live="polite"></div>
         </section>
 
         <section class="table-section" aria-labelledby="table-title">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">04 // ARQUIVO</p>
+              <p class="eyebrow">05 // ARQUIVO</p>
               <h2 id="table-title">Provas registradas</h2>
             </div>
           </div>
@@ -173,11 +201,12 @@
         <div class="notebook-intro">
           <p class="eyebrow">CADERNO // PENSAMENTO EM PROCESSO</p>
           <h2 id="notebook-title">Mesa de estudo</h2>
-          <p>Registre revisões, estratégias e ideias. Arraste cada nota para organizar o seu espaço.</p>
+          <p>Um espaço visual para conectar revisões, estratégias e ideias sem interromper o raciocínio.</p>
         </div>
 
         <section class="board-switcher board-switcher--notebook" aria-label="Escolher vestibular no caderno">
-          <button class="board-tab is-active" type="button" data-board="enem">ENEM</button>
+          <button class="board-tab is-active" type="button" data-board="general">GERAL</button>
+          <button class="board-tab" type="button" data-board="enem">ENEM</button>
           <button class="board-tab" type="button" data-board="unesp">UNESP</button>
           <button class="board-tab" type="button" data-board="famema">FAMEMA</button>
           <button class="board-tab" type="button" data-board="famerp">FAMERP</button>
@@ -185,25 +214,52 @@
         </section>
 
         <div class="notebook-workspace">
-          <aside class="notebook-composer">
-            <div>
-              <p class="eyebrow">NOVA NOTA</p>
-              <h3 id="notebook-board-label">ENEM</h3>
-            </div>
-            <label class="board-notes__editor">
-              <span>Conteúdo</span>
-              <textarea id="board-note-text" placeholder="O que precisa permanecer à vista?"></textarea>
-            </label>
-            <div class="board-notes__actions">
-              <button class="button button--primary-dark" type="button" id="save-board-note">Adicionar ao canvas</button>
-              <button class="button button--secondary" type="button" id="clear-board-note">Limpar</button>
-            </div>
-            <small>As notas ficam privadas no navegador e, com sincronização ativa, na sua conta.</small>
-          </aside>
+          <section class="canvas-stage" aria-label="Ferramentas e canvas de anotações">
+            <div class="canvas-toolbar">
+              <div class="canvas-toolbar__group canvas-toolbar__group--modes">
+                <span>Desenho</span>
+                <div>
+                  <button type="button" id="pen-mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 11-11-3.5-3.5-11 11L4 20Zm10.5-14 3.5 3.5"></path></svg><span>Caneta</span></button>
+                  <button type="button" id="arrow-mode" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 20 4M11 4h9v9"></path></svg><span>Seta</span></button>
+                </div>
+              </div>
 
-          <div class="notebook-canvas-wrap" aria-label="Canvas de anotações">
-            <div class="notebook-canvas" id="board-notes-carousel"></div>
-          </div>
+              <div class="canvas-toolbar__group canvas-toolbar__group--colors">
+                <span>Cor do traço</span>
+                <div class="drawing-color-options" id="drawing-color-options">
+                  <button type="button" class="drawing-color" data-drawing-color="neutral" aria-label="Traço neutro" aria-pressed="false"></button>
+                  <button type="button" class="drawing-color drawing-color--red is-active" data-drawing-color="red" aria-label="Traço vermelho" aria-pressed="true"></button>
+                  <button type="button" class="drawing-color drawing-color--blue" data-drawing-color="blue" aria-label="Traço azul" aria-pressed="false"></button>
+                  <button type="button" class="drawing-color drawing-color--green" data-drawing-color="green" aria-label="Traço verde" aria-pressed="false"></button>
+                  <button type="button" class="drawing-color drawing-color--paper" data-drawing-color="paper" aria-label="Traço papel" aria-pressed="false"></button>
+                </div>
+              </div>
+
+              <div class="canvas-toolbar__group canvas-toolbar__group--history">
+                <span>Edição</span>
+                <div>
+                  <button type="button" id="undo-drawing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"></path></svg><span>Desfazer</span></button>
+                  <button type="button" id="clear-drawing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 7-9 7 6-6 8H9l-4-5Zm4 5h11"></path></svg><span>Limpar caneta</span></button>
+                </div>
+              </div>
+
+              <p class="canvas-tool-status" id="canvas-tool-status" aria-live="polite">Arraste o fundo para navegar. Use o ponto lateral dos cards para conectá-los.</p>
+            </div>
+
+            <div class="notebook-canvas-wrap" aria-label="Canvas de anotações">
+              <div class="canvas-onboarding" id="canvas-onboarding" role="note">
+                <button type="button" class="canvas-onboarding__close" id="canvas-onboarding-dismiss" aria-label="Não mostrar esta instrução novamente">×</button>
+                <span>02 // CRIAR NOTA</span>
+                <strong>DUPLO CLIQUE</strong>
+                <p>ou dois toques rápidos em qualquer ponto da mesa</p>
+              </div>
+              <div class="notebook-canvas" id="board-notes-carousel">
+                <svg class="canvas-connections" id="canvas-connections" aria-hidden="true"></svg>
+                <svg class="canvas-drawing" id="canvas-drawing" aria-label="Desenhos livres no caderno"></svg>
+                <div class="canvas-items" id="canvas-items"></div>
+              </div>
+            </div>
+          </section>
         </div>
       </section>
     </main>
@@ -236,6 +292,6 @@
 
     <script src="./supabase-config.js?v=20260706-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.106.2"></script>
-    <script src="./app.js?v=20260710-2"></script>
+    <script src="./app.js?v=20260710-10"></script>
   </body>
 </html>

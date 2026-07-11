@@ -4,9 +4,12 @@ const PREVIOUS_STORAGE_PREFIX = "central-estudos.board.v1";
 const ACTIVE_BOARD_KEY = "central-estudos.active-board.v1";
 const SEED_VERSION_PREFIX = "central-estudos.seed-version.v1";
 const NOTES_STORAGE_PREFIX = "central-estudos.board-notes.v1";
+const ESSAYS_STORAGE_PREFIX = "central-estudos.essay-records.v1";
+const CANVAS_STORAGE_PREFIX = "central-estudos.canvas-state.v1";
 const THEME_KEY = "central-estudos.theme.v1";
 const MAP_MODE_KEY = "central-estudos.map-mode.v1";
 const TARGET_PERCENT_KEY = "central-estudos.target-percent.v1";
+const CANVAS_ONBOARDING_DISMISSED_KEY = "central-estudos.canvas-onboarding-dismissed.v1";
 const SUPABASE_CONFIG = window.ZAN_SUPABASE_CONFIG || {};
 
 const BOARD_SEED_VERSIONS = {
@@ -28,11 +31,24 @@ const colors = {
   red: "#b84a42"
 };
 
+const generalBoard = {
+  id: "general",
+  label: "GERAL",
+  notebookOnly: true,
+  totalMax: 0,
+  essayMax: null,
+  seed: [],
+  placeholder: "",
+  note: "canvas livre",
+  sections: []
+};
+
 const boards = [
   {
     id: "enem",
     label: "ENEM",
     totalMax: 180,
+    essayMax: 1000,
     seed: [],
     placeholder: "Ex: ENEM 2025 PPL",
     note: "prova inteira",
@@ -47,6 +63,7 @@ const boards = [
     id: "unesp",
     label: "UNESP",
     totalMax: 90,
+    essayMax: 28,
     seed: [],
     placeholder: "Ex: UNESP 2026 - 1a fase",
     note: "1a fase: 90 objetivas; distribuicao por disciplina para controle pessoal",
@@ -68,6 +85,7 @@ const boards = [
     id: "famema",
     label: "FAMEMA",
     totalMax: 40,
+    essayMax: 11,
     seed: [],
     placeholder: "Ex: FAMEMA 2026 - objetiva",
     note: "Prova II objetiva; discursivas de quimica/biologia aparecem em contagem separada",
@@ -86,6 +104,7 @@ const boards = [
     id: "famerp",
     label: "FAMERP",
     totalMax: 80,
+    essayMax: 20,
     seed: [],
     placeholder: "Ex: FAMERP 2026 - Conhecimentos Gerais",
     note: "Conhecimentos Gerais: 80 objetivas, 10 por disciplina",
@@ -104,6 +123,7 @@ const boards = [
     id: "unifesp",
     label: "UNIFESP",
     totalMax: 100,
+    essayMax: 50,
     conversion: "unifesp-days",
     seed: [],
     placeholder: "Ex: UNIFESP 2026 - complementares",
@@ -118,6 +138,8 @@ const boards = [
     ]
   }
 ];
+
+const notebookBoards = [generalBoard, ...boards];
 
 const el = {
   status: document.querySelector("#data-status"),
@@ -147,13 +169,30 @@ const el = {
   chartGoalPill: document.querySelector("#chart-goal-pill"),
   targetList: document.querySelector("#target-list"),
   progressChart: document.querySelector("#progress-chart"),
+  enemSubjectChartCard: document.querySelector("#enem-subject-chart-card"),
+  enemSubjectChart: document.querySelector("#enem-subject-chart"),
+  enemSubjectLegend: document.querySelector("#enem-subject-legend"),
   examCarousel: document.querySelector("#exam-carousel"),
   mapModeToggle: document.querySelector("#map-mode-toggle"),
-  boardNoteText: document.querySelector("#board-note-text"),
-  saveBoardNote: document.querySelector("#save-board-note"),
-  clearBoardNote: document.querySelector("#clear-board-note"),
   boardNotesCarousel: document.querySelector("#board-notes-carousel"),
-  notebookBoardLabel: document.querySelector("#notebook-board-label"),
+  notebookCanvasWrap: document.querySelector(".notebook-canvas-wrap"),
+  boardNotesLayer: document.querySelector("#canvas-items"),
+  canvasConnections: document.querySelector("#canvas-connections"),
+  canvasDrawing: document.querySelector("#canvas-drawing"),
+  canvasOnboarding: document.querySelector("#canvas-onboarding"),
+  canvasOnboardingDismiss: document.querySelector("#canvas-onboarding-dismiss"),
+  penMode: document.querySelector("#pen-mode"),
+  arrowMode: document.querySelector("#arrow-mode"),
+  drawingColorOptions: document.querySelector("#drawing-color-options"),
+  undoDrawing: document.querySelector("#undo-drawing"),
+  clearDrawing: document.querySelector("#clear-drawing"),
+  canvasToolStatus: document.querySelector("#canvas-tool-status"),
+  essayForm: document.querySelector("#essay-form"),
+  essayTheme: document.querySelector("#essay-theme"),
+  essayScore: document.querySelector("#essay-score"),
+  essayObservation: document.querySelector("#essay-observation"),
+  essayScale: document.querySelector("#essay-scale"),
+  essayList: document.querySelector("#essay-list"),
   table: document.querySelector("#exam-table"),
   tableHead: document.querySelector("thead tr"),
   form: document.querySelector("#exam-form"),
@@ -168,9 +207,13 @@ const el = {
   boardTabs: [...document.querySelectorAll("[data-board]")]
 };
 
-let activeBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY)) || boards[0];
+const storedActiveBoard = boardById(localStorage.getItem(ACTIVE_BOARD_KEY));
+let activeBoard = storedActiveBoard && (!storedActiveBoard.notebookOnly || location.hash === "#caderno") ? storedActiveBoard : boards[0];
+let lastAcademicBoard = activeBoard.notebookOnly ? boards[0] : activeBoard;
 let exams = loadExams(activeBoard);
 let boardNotes = loadBoardNotes(activeBoard);
+let essays = loadEssays(activeBoard);
+let canvasState = loadCanvasState(activeBoard);
 let activeTheme = localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
 let mapMode = localStorage.getItem(MAP_MODE_KEY) === "errors" ? "errors" : "scores";
 let targetPercent = loadTargetPercent();
@@ -180,10 +223,21 @@ let currentUser = null;
 let chartFrame = 0;
 let syncFeedbackTimer = 0;
 let noteDrag = null;
+let noteResize = null;
+let customizingNoteId = null;
+let noteSyncTimer = 0;
+let canvasPan = null;
+let lastCanvasTap = null;
+let canvasMode = "move";
+let drawingColor = "red";
+let linkGesture = null;
+let animatedNoteId = null;
+let activeStroke = null;
+let activeArrow = null;
 const chartWidths = new WeakMap();
 
 function boardById(id) {
-  return boards.find((board) => board.id === id);
+  return notebookBoards.find((board) => board.id === id);
 }
 
 function storageKey(board, prefix = STORAGE_PREFIX) {
@@ -196,6 +250,14 @@ function seedVersionKey(board) {
 
 function notesStorageKey(board) {
   return `${NOTES_STORAGE_PREFIX}.${board.id}`;
+}
+
+function essaysStorageKey(board) {
+  return `${ESSAYS_STORAGE_PREFIX}.${board.id}`;
+}
+
+function canvasStorageKey(board) {
+  return `${CANVAS_STORAGE_PREFIX}.${board.id}`;
 }
 
 function targetTotal(board = activeBoard) {
@@ -388,12 +450,55 @@ function loadBoardNotes(board) {
       text: note.text.trim(),
       createdAt: note.createdAt || new Date().toISOString(),
       x: Number.isFinite(Number(note.x)) ? Number(note.x) : 32 + (index % 3) * 278,
-      y: Number.isFinite(Number(note.y)) ? Number(note.y) : 32 + Math.floor(index / 3) * 190
+      y: Number.isFinite(Number(note.y)) ? Number(note.y) : 32 + Math.floor(index / 3) * 190,
+      color: ["neutral", "red", "blue", "green", "paper"].includes(note.color) ? note.color : "neutral",
+      fontSize: Math.max(10, Math.min(48, Number(note.fontSize) || 16)),
+      bold: Boolean(note.bold),
+      underline: Boolean(note.underline),
+      width: Math.max(200, Math.min(560, Number(note.width) || 246)),
+      height: Math.max(140, Math.min(560, Number(note.height) || 168)),
+      isChecklist: Boolean(note.isChecklist),
+      checklistState: Array.isArray(note.checklistState) ? note.checklistState.map(Boolean) : []
     }));
+}
+
+function loadEssays(board) {
+  const stored = readStoredArray(essaysStorageKey(board));
+  if (!stored) return [];
+  return stored
+    .filter((essay) => essay && typeof essay.theme === "string" && nullableScore(essay.score) !== null)
+    .map((essay) => ({
+      id: essay.id || crypto.randomUUID(),
+      theme: essay.theme.trim(),
+      score: nullableScore(essay.score),
+      observation: String(essay.observation || "").trim(),
+      createdAt: essay.createdAt || new Date().toISOString()
+    }));
+}
+
+function loadCanvasState(board) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(canvasStorageKey(board)) || "null");
+    return {
+      links: Array.isArray(stored?.links) ? stored.links.filter((link) => link?.from && link?.to) : [],
+      strokes: Array.isArray(stored?.strokes) ? stored.strokes.filter((stroke) => Array.isArray(stroke?.points) && stroke.points.length > 1) : [],
+      arrows: Array.isArray(stored?.arrows) ? stored.arrows.filter((arrow) => arrow?.from && arrow?.to) : []
+    };
+  } catch {
+    return { links: [], strokes: [], arrows: [] };
+  }
 }
 
 function persistBoardNotes() {
   localStorage.setItem(notesStorageKey(activeBoard), JSON.stringify(boardNotes));
+}
+
+function persistEssays() {
+  localStorage.setItem(essaysStorageKey(activeBoard), JSON.stringify(essays));
+}
+
+function persistCanvasState() {
+  localStorage.setItem(canvasStorageKey(activeBoard), JSON.stringify(canvasState));
 }
 
 function persist() {
@@ -403,6 +508,16 @@ function persist() {
 
 function switchView(view, { updateHash = true } = {}) {
   const next = ["home", "records", "notebook"].includes(view) ? view : "home";
+  if (next !== "notebook" && activeBoard.notebookOnly) {
+    activeBoard = lastAcademicBoard;
+    exams = loadExams(activeBoard);
+    boardNotes = loadBoardNotes(activeBoard);
+    essays = loadEssays(activeBoard);
+    canvasState = loadCanvasState(activeBoard);
+    localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
+    resetForm();
+    render();
+  }
   activeView = next;
   document.body.dataset.view = next;
   el.views.forEach((section) => {
@@ -546,6 +661,8 @@ async function initSupabase() {
     } else {
       exams = loadExams(activeBoard);
       boardNotes = loadBoardNotes(activeBoard);
+      essays = loadEssays(activeBoard);
+      canvasState = loadCanvasState(activeBoard);
       render();
       updateStatusForBoard();
     }
@@ -625,7 +742,15 @@ function rowToNote(row) {
     text: String(row.text || "").trim(),
     createdAt: row.created_at || row.createdAt || new Date().toISOString(),
     x: Number(row.position_x ?? row.x ?? 32),
-    y: Number(row.position_y ?? row.y ?? 32)
+    y: Number(row.position_y ?? row.y ?? 32),
+    color: row.card_color || "neutral",
+    fontSize: Number(row.font_size || 16),
+    bold: Boolean(row.is_bold),
+    underline: Boolean(row.is_underlined),
+    width: Number(row.card_width || 246),
+    height: Number(row.card_height || 168),
+    isChecklist: Boolean(row.is_checklist),
+    checklistState: Array.isArray(row.checklist_state) ? row.checklist_state.map(Boolean) : []
   };
 }
 
@@ -637,7 +762,37 @@ function noteToRow(note, board) {
     text: note.text,
     created_at: note.createdAt || new Date().toISOString(),
     position_x: Math.round(note.x || 32),
-    position_y: Math.round(note.y || 32)
+    position_y: Math.round(note.y || 32),
+    card_color: note.color || "neutral",
+    font_size: Math.max(10, Math.min(48, Number(note.fontSize) || 16)),
+    is_bold: Boolean(note.bold),
+    is_underlined: Boolean(note.underline),
+    card_width: Math.round(note.width || 246),
+    card_height: Math.round(note.height || 168),
+    is_checklist: Boolean(note.isChecklist),
+    checklist_state: Array.isArray(note.checklistState) ? note.checklistState.map(Boolean) : []
+  };
+}
+
+function rowToEssay(row) {
+  return {
+    id: row.id,
+    theme: String(row.theme || "").trim(),
+    score: nullableScore(row.score),
+    observation: String(row.observation || "").trim(),
+    createdAt: row.created_at || new Date().toISOString()
+  };
+}
+
+function essayToRow(essay, board) {
+  return {
+    id: essay.id,
+    user_id: currentUser.id,
+    board_id: board.id,
+    theme: essay.theme,
+    score: essay.score,
+    observation: essay.observation || "",
+    created_at: essay.createdAt || new Date().toISOString()
   };
 }
 
@@ -654,8 +809,14 @@ function mergeNotesForSync(remoteNotes, localNotes) {
   return [...remoteNotes, ...additions];
 }
 
+function mergeEssaysForSync(remoteEssays, localEssays) {
+  const byId = new Set(remoteEssays.map((essay) => essay.id));
+  const additions = localEssays.filter((essay) => !byId.has(essay.id));
+  return [...remoteEssays, ...additions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
 async function fetchRemoteBoard(board) {
-  const [examResult, noteResult] = await Promise.all([
+  const [examResult, noteResult, essayResult, canvasResult] = await Promise.all([
     supabaseClient
       .from("exam_records")
       .select("id, board_id, prova, scores, total, obs, position, created_at, updated_at")
@@ -664,13 +825,25 @@ async function fetchRemoteBoard(board) {
       .order("created_at", { ascending: true }),
     supabaseClient
       .from("board_note_records")
-      .select("id, board_id, text, position_x, position_y, created_at, updated_at")
+      .select("id, board_id, text, position_x, position_y, card_color, font_size, is_bold, is_underlined, card_width, card_height, is_checklist, checklist_state, created_at, updated_at")
       .eq("board_id", board.id)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabaseClient
+      .from("essay_records")
+      .select("id, board_id, theme, score, observation, created_at, updated_at")
+      .eq("board_id", board.id)
+      .order("created_at", { ascending: false }),
+    supabaseClient
+      .from("board_canvas_records")
+      .select("board_id, canvas_state, updated_at")
+      .eq("board_id", board.id)
+      .limit(1)
   ]);
 
   if (examResult.error) throw examResult.error;
   if (noteResult.error) throw noteResult.error;
+  if (essayResult.error) throw essayResult.error;
+  if (canvasResult.error) throw canvasResult.error;
 
   const remoteNotes = (noteResult.data || []).map(rowToNote).filter((note) => note.text);
   if (remoteNotes.length > 1 && remoteNotes.every((note) => note.x === 32 && note.y === 32)) {
@@ -682,13 +855,16 @@ async function fetchRemoteBoard(board) {
 
   return {
     exams: normalizeExams((examResult.data || []).map(rowToExam), board),
-    notes: remoteNotes
+    notes: remoteNotes,
+    essays: (essayResult.data || []).map(rowToEssay).filter((essay) => essay.theme && essay.score !== null),
+    canvasState: canvasResult.data?.[0]?.canvas_state || { links: [], strokes: [], arrows: [] }
   };
 }
 
-async function saveRemoteBoard(board, nextExams, nextNotes) {
+async function saveRemoteBoard(board, nextExams, nextNotes, nextEssays = essays, nextCanvasState = canvasState) {
   const examRows = nextExams.map((exam, index) => examToRow(exam, board, index));
-  const noteRows = nextNotes.map((note) => noteToRow(note, board));
+  const noteRows = nextNotes.filter((note) => String(note.text || "").trim()).map((note) => noteToRow(note, board));
+  const essayRows = nextEssays.map((essay) => essayToRow(essay, board));
 
   if (examRows.length) {
     const { error } = await supabaseClient.from("exam_records").upsert(examRows, { onConflict: "id" });
@@ -699,6 +875,17 @@ async function saveRemoteBoard(board, nextExams, nextNotes) {
     const { error } = await supabaseClient.from("board_note_records").upsert(noteRows, { onConflict: "id" });
     if (error) throw error;
   }
+
+  if (essayRows.length) {
+    const { error } = await supabaseClient.from("essay_records").upsert(essayRows, { onConflict: "id" });
+    if (error) throw error;
+  }
+
+  const { error: canvasError } = await supabaseClient.from("board_canvas_records").upsert(
+    { user_id: currentUser.id, board_id: board.id, canvas_state: nextCanvasState || { links: [], strokes: [], arrows: [] } },
+    { onConflict: "user_id,board_id" }
+  );
+  if (canvasError) throw canvasError;
 }
 
 async function deleteRemoteExam(id) {
@@ -713,9 +900,17 @@ async function deleteRemoteNote(id) {
   if (error) throw error;
 }
 
-function saveLocalBoard(board, nextExams, nextNotes) {
+async function deleteRemoteEssay(id) {
+  if (!isOnlineMode()) return;
+  const { error } = await supabaseClient.from("essay_records").delete().eq("id", id);
+  if (error) throw error;
+}
+
+function saveLocalBoard(board, nextExams, nextNotes, nextEssays, nextCanvasState) {
   localStorage.setItem(storageKey(board), JSON.stringify(nextExams));
   localStorage.setItem(notesStorageKey(board), JSON.stringify(nextNotes));
+  localStorage.setItem(essaysStorageKey(board), JSON.stringify(nextEssays));
+  localStorage.setItem(canvasStorageKey(board), JSON.stringify(nextCanvasState));
 }
 
 async function syncBoardData(board, { silent = false } = {}) {
@@ -723,15 +918,23 @@ async function syncBoardData(board, { silent = false } = {}) {
   try {
     const localExams = normalizeExams(loadExams(board), board);
     const localNotes = loadBoardNotes(board);
+    const localEssays = loadEssays(board);
+    const localCanvasState = loadCanvasState(board);
     const remote = await fetchRemoteBoard(board);
     const mergedExams = mergeExamsForSync(remote.exams, localExams);
     const mergedNotes = mergeNotesForSync(remote.notes, localNotes);
-    await saveRemoteBoard(board, mergedExams, mergedNotes);
-    saveLocalBoard(board, mergedExams, mergedNotes);
+    const mergedEssays = mergeEssaysForSync(remote.essays, localEssays);
+    const mergedCanvasState = remote.canvasState?.strokes?.length || remote.canvasState?.links?.length || remote.canvasState?.arrows?.length
+      ? remote.canvasState
+      : localCanvasState;
+    await saveRemoteBoard(board, mergedExams, mergedNotes, mergedEssays, mergedCanvasState);
+    saveLocalBoard(board, mergedExams, mergedNotes, mergedEssays, mergedCanvasState);
 
     if (board.id === activeBoard.id) {
       exams = mergedExams;
       boardNotes = mergedNotes;
+      essays = mergedEssays;
+      canvasState = mergedCanvasState;
       render();
     }
 
@@ -751,7 +954,7 @@ async function syncBoardData(board, { silent = false } = {}) {
 async function syncAllBoards({ silent = false } = {}) {
   if (!isOnlineMode()) return false;
   const failedBoards = [];
-  for (const board of boards) {
+  for (const board of notebookBoards) {
     const result = await syncBoardData(board, { silent: true });
     if (!result.ok) failedBoards.push(board.label);
   }
@@ -772,6 +975,8 @@ async function loadActiveBoardData() {
   if (!isOnlineMode()) {
     exams = loadExams(activeBoard);
     boardNotes = loadBoardNotes(activeBoard);
+    essays = loadEssays(activeBoard);
+    canvasState = loadCanvasState(activeBoard);
     render();
     return true;
   }
@@ -794,11 +999,14 @@ function applyTheme(theme) {
     el.themeToggle.setAttribute("aria-label", label);
     el.themeToggle.title = label;
     el.themeToggle.setAttribute("aria-pressed", String(isDark));
+    el.themeToggle.querySelector('[data-theme-icon="moon"]')?.toggleAttribute("hidden", !isDark);
+    el.themeToggle.querySelector('[data-theme-icon="sun"]')?.toggleAttribute("hidden", isDark);
   }
   if (el.themeColorMeta) {
     el.themeColorMeta.setAttribute("content", activeTheme === "dark" ? "#0b0b0a" : "#f2efe8");
   }
   drawCharts(true);
+  renderCanvasOverlays();
 }
 
 function toggleTheme() {
@@ -901,6 +1109,76 @@ function drawProgressChart(canvas) {
     ctx.fillText(point.exam.total, point.x, point.y - 11);
   });
 
+}
+
+function drawEnemSubjectChart(canvas) {
+  const ctx = prepareCanvas(canvas);
+  const data = exams.filter((exam) => computeTotal(exam) !== null);
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const padding = { top: 28, right: 24, bottom: 34, left: 42 };
+  const plotW = width - padding.left - padding.right;
+  const plotH = height - padding.top - padding.bottom;
+  const target = targetPercent === null ? null : Math.ceil(45 * (targetPercent / 100));
+  const scoreValues = data.flatMap((exam) => activeBoard.sections.map((section) => getScore(exam, section.key))).filter((value) => value !== null);
+  if (target !== null) scoreValues.push(target);
+  const lowest = scoreValues.length ? Math.min(...scoreValues) : 0;
+  const min = lowest <= 7 ? 0 : Math.max(0, Math.floor((lowest - 4) / 5) * 5);
+  const range = Math.max(1, 45 - min);
+
+  ctx.clearRect(0, 0, width, height);
+  drawGrid(ctx, padding, width, height, [...new Set([min, target, 45].filter((value) => value !== null))], min, 45);
+
+  if (!data.length) {
+    drawEmptyChart(ctx, width, height, "Sem provas do ENEM");
+    return;
+  }
+
+  if (target !== null) {
+    const targetY = padding.top + plotH - ((target - min) / range) * plotH;
+    ctx.save();
+    ctx.strokeStyle = cssVar("--green") || "#48d29b";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([7, 7]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, targetY);
+    ctx.lineTo(width - padding.right, targetY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  activeBoard.sections.forEach((section) => {
+    const points = data.map((exam, index) => ({
+      value: getScore(exam, section.key) ?? 0,
+      x: padding.left + (plotW * index) / Math.max(data.length - 1, 1)
+    }));
+    ctx.strokeStyle = section.color;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const y = padding.top + plotH - ((point.value - min) / range) * plotH;
+      if (index === 0) ctx.moveTo(point.x, y);
+      else ctx.lineTo(point.x, y);
+    });
+    ctx.stroke();
+
+    points.forEach((point) => {
+      const y = padding.top + plotH - ((point.value - min) / range) * plotH;
+      ctx.fillStyle = section.color;
+      ctx.beginPath();
+      ctx.arc(point.x, y, 3.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+}
+
+function renderEnemSubjectChart() {
+  const isEnem = activeBoard.id === "enem";
+  el.enemSubjectChartCard.hidden = !isEnem;
+  if (!isEnem) return;
+  el.enemSubjectLegend.innerHTML = activeBoard.sections
+    .map((section) => `<span><i style="--legend-color:${section.color}"></i>${escapeHtml(section.label)}</span>`)
+    .join("");
 }
 
 function prepareCanvas(canvas) {
@@ -1067,6 +1345,10 @@ function renderExamCarousel() {
       `;
     })
     .join("");
+
+  requestAnimationFrame(() => {
+    el.examCarousel.scrollLeft = el.examCarousel.scrollWidth;
+  });
 }
 
 function updateMapModeToggle() {
@@ -1088,32 +1370,432 @@ function toggleMapMode() {
   renderExamCarousel();
 }
 
-function renderBoardNotes() {
-  if (!el.boardNotesCarousel) return;
-  if (el.notebookBoardLabel) el.notebookBoardLabel.textContent = activeBoard.label;
+function renderEssays() {
+  if (!el.essayList) return;
+  el.essayScale.textContent = `ESCALA 0–${activeBoard.essayMax}`;
+  el.essayScore.placeholder = `0–${activeBoard.essayMax}`;
+  el.essayScore.setAttribute("aria-label", `Nota de zero a ${activeBoard.essayMax}`);
 
-  if (!boardNotes.length) {
-    el.boardNotesCarousel.innerHTML = `
-      <div class="canvas-empty">
-        <span>01</span>
-        <strong>Canvas livre</strong>
-        <p>Crie a primeira nota de ${escapeHtml(activeBoard.label)}. Ela aparecerá aqui e poderá ser arrastada.</p>
+  if (!essays.length) {
+    el.essayList.innerHTML = `
+      <div class="essay-empty">
+        <span>SEM REGISTROS</span>
+        <p>Adicione a primeira redação de ${escapeHtml(activeBoard.label)} para acompanhar tema, nota e orientação.</p>
       </div>
     `;
     return;
   }
 
-  el.boardNotesCarousel.innerHTML = boardNotes
-    .map((note) => `
-      <article class="canvas-note" data-note-id="${note.id}" style="--note-x: ${Math.max(16, note.x || 32)}px; --note-y: ${Math.max(16, note.y || 32)}px;">
-        <div class="canvas-note__bar" data-note-drag="${note.id}">
-          <span>${escapeHtml(activeBoard.label)} // ${escapeHtml(formatDate(note.createdAt))}</span>
-          <button type="button" data-note-action="delete" data-id="${note.id}" aria-label="Excluir nota">×</button>
+  el.essayList.innerHTML = essays
+    .map((essay, index) => `
+      <article class="essay-record">
+        <div class="essay-record__index">${String(essays.length - index).padStart(2, "0")}</div>
+        <div class="essay-record__content">
+          <span>${escapeHtml(formatDate(essay.createdAt))} // ${escapeHtml(activeBoard.label)}</span>
+          <h3>${escapeHtml(essay.theme)}</h3>
+          <p>${essay.observation ? escapeHtml(essay.observation) : "Sem observação."}</p>
         </div>
-        <p>${escapeHtml(note.text)}</p>
+        <div class="essay-record__score"><strong>${formatNumber(essay.score)}</strong><span>/${activeBoard.essayMax}</span></div>
+        <button type="button" class="essay-record__delete" data-essay-action="delete" data-id="${essay.id}" aria-label="Excluir redação ${escapeHtml(essay.theme)}">EXCLUIR</button>
       </article>
     `)
     .join("");
+
+}
+
+async function saveEssay(event) {
+  event.preventDefault();
+  const theme = el.essayTheme.value.trim();
+  const score = nullableScore(el.essayScore.value);
+  const observation = el.essayObservation.value.trim();
+  if (!theme || score === null || score < 0 || score > activeBoard.essayMax) {
+    setStatus(`Preencha o tema e uma nota entre 0 e ${activeBoard.essayMax}.`, true);
+    return;
+  }
+
+  essays = [{ id: crypto.randomUUID(), theme, score, observation, createdAt: new Date().toISOString() }, ...essays];
+  persistEssays();
+  el.essayForm.reset();
+  renderEssays();
+  setStatus(`${activeBoard.label}: redação salva neste navegador.`);
+
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteBoard(activeBoard, exams, boardNotes, essays, canvasState);
+      setStatus(`${activeBoard.label}: redação salva e sincronizada.`);
+    } catch (error) {
+      setStatus(`Redação salva localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+    }
+  }
+}
+
+async function handleEssayClick(event) {
+  const button = event.target.closest("button[data-essay-action='delete']");
+  if (!button) return;
+  const id = button.dataset.id;
+  essays = essays.filter((essay) => essay.id !== id);
+  persistEssays();
+  renderEssays();
+  if (isOnlineMode()) {
+    try {
+      await deleteRemoteEssay(id);
+    } catch {
+      setStatus("Redação excluída localmente; a sincronização falhou.", true);
+      return;
+    }
+  }
+  setStatus(`${activeBoard.label}: redação excluída.`);
+}
+
+function renderBoardNotes() {
+  if (!el.boardNotesLayer) return;
+  const cardToAnimate = animatedNoteId;
+  animatedNoteId = null;
+
+  el.boardNotesLayer.innerHTML = boardNotes
+    .map((note) => `
+      <article class="canvas-note canvas-note--${note.color || "neutral"}${customizingNoteId === note.id ? " is-customizing" : ""}${cardToAnimate === note.id ? " is-new" : ""}" data-note-id="${note.id}" style="--note-x:${Math.max(16, note.x || 32)}px;--note-y:${Math.max(16, note.y || 32)}px;--note-width:${Math.max(200, Math.min(560, note.width || 246))}px;--note-height:${Math.max(140, Math.min(560, note.height || 168))}px;--note-font-size:${Math.max(10, Math.min(48, note.fontSize || 16))}px;">
+        <div class="canvas-note__bar" data-note-drag="${note.id}">
+          <span>${escapeHtml(activeBoard.label)} // ${escapeHtml(formatDate(note.createdAt))}</span>
+          <div class="canvas-note__actions">
+            <button type="button" data-note-action="customize" data-id="${note.id}" aria-label="Editar e personalizar card" aria-pressed="${customizingNoteId === note.id}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 11-11-3.5-3.5-11 11L4 20Zm10.5-14 3.5 3.5"></path></svg></button>
+            <button type="button" data-note-action="delete" data-id="${note.id}" aria-label="Excluir nota">×</button>
+          </div>
+        </div>
+        ${customizingNoteId === note.id ? renderNoteInspector(note) : ""}
+        ${renderNoteContent(note)}
+        <button class="canvas-note__connector" type="button" data-note-link-handle="${note.id}" aria-label="Arraste para conectar este card a outro"><span aria-hidden="true"></span></button>
+        <button class="canvas-note__resize" type="button" data-note-resize="${note.id}" aria-label="Redimensionar card"></button>
+      </article>
+    `)
+    .join("");
+  renderCanvasOverlays();
+  el.boardNotesLayer.querySelectorAll(".canvas-note.is-new").forEach((card) => {
+    setTimeout(() => card.classList.remove("is-new"), 420);
+  });
+}
+
+function checklistItems(note) {
+  const items = String(note.text || "").split(/\r?\n/);
+  return items.length ? items : [""];
+}
+
+function renderNoteInspector(note) {
+  const colors = ["neutral", "red", "blue", "green", "paper"];
+  return `
+    <div class="canvas-note__inspector" data-note-inspector="${note.id}">
+      <div class="card-color-options" aria-label="Cor do card">
+        ${colors.map((color) => `<button type="button" class="card-color card-color--${color}${note.color === color ? " is-active" : ""}" data-note-control="color" data-value="${color}" data-id="${note.id}" aria-label="Cor ${color}" aria-pressed="${note.color === color}"></button>`).join("")}
+      </div>
+      <label class="card-font-control"><span>Tamanho</span><input type="range" min="10" max="48" step="1" value="${note.fontSize || 16}" data-note-control="font" data-id="${note.id}"><output>${Math.round(note.fontSize || 16)} px</output></label>
+      <div class="card-format-options">
+        <button type="button" class="${note.bold ? "is-active" : ""}" data-note-control="bold" data-id="${note.id}" aria-pressed="${note.bold}"><strong>B</strong><span>Negrito</span></button>
+        <button type="button" class="${note.underline ? "is-active" : ""}" data-note-control="underline" data-id="${note.id}" aria-pressed="${note.underline}"><u>U</u><span>Sublinhado</span></button>
+        <button type="button" class="${note.isChecklist ? "is-active" : ""}" data-note-control="checklist" data-id="${note.id}" aria-pressed="${note.isChecklist}"><strong>✓</strong><span>Checklist</span></button>
+      </div>
+    </div>
+  `;
+}
+
+function renderNoteContent(note) {
+  const contentClass = `${note.bold ? "is-bold" : ""} ${note.underline ? "is-underlined" : ""}`;
+  if (!note.isChecklist) {
+    return `<div class="canvas-note__editor ${contentClass}" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Editar conteúdo do card" spellcheck="true" data-note-editor="${note.id}" data-placeholder="Comece a escrever...">${escapeHtml(note.text)}</div>`;
+  }
+  const items = checklistItems(note);
+  note.checklistState = items.map((_, index) => Boolean(note.checklistState?.[index]));
+  return `
+    <div class="canvas-note__checklist ${contentClass}">
+      ${items.map((item, index) => `
+        <div class="canvas-check-item${note.checklistState[index] ? " is-checked" : ""}">
+          <input type="checkbox" data-note-action="check" data-id="${note.id}" data-check-index="${index}" ${note.checklistState[index] ? "checked" : ""}>
+          <span contenteditable="true" role="textbox" spellcheck="true" data-note-check-editor="${note.id}" data-check-index="${index}" data-placeholder="Item da lista">${escapeHtml(item)}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function noteCenter(note) {
+  const element = el.boardNotesLayer?.querySelector(`[data-note-id="${CSS.escape(note.id)}"]`);
+  return {
+    x: (note.x || 32) + (element?.offsetWidth || 246) / 2,
+    y: (note.y || 32) + (element?.offsetHeight || 152) / 2
+  };
+}
+
+function linkCurvePath(from, to) {
+  const direction = to.x >= from.x ? 1 : -1;
+  const curve = Math.max(58, Math.abs(to.x - from.x) * 0.42, Math.abs(to.y - from.y) * 0.18);
+  return `M ${from.x} ${from.y} C ${from.x + curve * direction} ${from.y}, ${to.x - curve * direction} ${to.y}, ${to.x} ${to.y}`;
+}
+
+function renderCanvasOverlays() {
+  if (!el.canvasConnections || !el.canvasDrawing) return;
+  const width = Math.max(el.boardNotesCarousel.scrollWidth, el.boardNotesCarousel.clientWidth, 1800);
+  const height = Math.max(el.boardNotesCarousel.scrollHeight, el.boardNotesCarousel.clientHeight, 1400);
+  [el.canvasConnections, el.canvasDrawing].forEach((svg) => {
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("width", String(width));
+    svg.setAttribute("height", String(height));
+  });
+
+  const noteIds = new Set(boardNotes.map((note) => note.id));
+  canvasState.links = canvasState.links.filter((link) => noteIds.has(link.from) && noteIds.has(link.to));
+  el.canvasConnections.innerHTML = canvasState.links
+    .map((link) => {
+      const from = noteCenter(boardNotes.find((note) => note.id === link.from));
+      const to = noteCenter(boardNotes.find((note) => note.id === link.to));
+      const path = linkCurvePath(from, to);
+      return `<g class="canvas-connection"><path class="canvas-connection__shadow" d="${path}"></path><path class="canvas-connection__line" d="${path}"></path><circle cx="${from.x}" cy="${from.y}" r="4"></circle><circle cx="${to.x}" cy="${to.y}" r="4"></circle></g>`;
+    })
+    .join("");
+
+  if (!Array.isArray(canvasState.arrows)) canvasState.arrows = [];
+  const arrowMarkers = ["neutral", "red", "blue", "green", "paper"]
+    .map((color) => `<marker id="arrowhead-${color}" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,4.5 L0,9 z" style="fill:${drawingColorValue(color)};stroke:none"></path></marker>`)
+    .join("");
+  const arrowPaths = canvasState.arrows
+    .map((arrow) => {
+      const colorKey = ["neutral", "red", "blue", "green", "paper"].includes(arrow.color) ? arrow.color : "red";
+      return `<path class="canvas-arrow" d="M ${arrow.from.x} ${arrow.from.y} L ${arrow.to.x} ${arrow.to.y}" stroke="${drawingColorValue(colorKey)}" stroke-width="2.4" marker-end="url(#arrowhead-${colorKey})"></path>`;
+    })
+    .join("");
+  const strokePaths = canvasState.strokes
+    .map((stroke) => {
+      const points = stroke.points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+      return `<path d="${points}" stroke="${drawingColorValue(stroke.color || "red")}" stroke-width="${Math.max(1, Math.min(8, stroke.width || 2.4))}"></path>`;
+    })
+    .join("");
+  el.canvasDrawing.innerHTML = `<defs>${arrowMarkers}</defs>${arrowPaths}${strokePaths}`;
+  el.canvasDrawing.classList.toggle("is-active", canvasMode === "pen" || canvasMode === "arrow");
+}
+
+function drawingColorValue(color) {
+  if (String(color).startsWith("#")) return escapeHtml(color);
+  return {
+    neutral: cssVar("--muted-strong") || "#c4c2ba",
+    red: "#e44232",
+    blue: "#6b8cff",
+    green: "#48d29b",
+    paper: "#d7cbbb"
+  }[color] || "#e44232";
+}
+
+function updateDrawingColorControls() {
+  el.drawingColorOptions.querySelectorAll("[data-drawing-color]").forEach((button) => {
+    const active = button.dataset.drawingColor === drawingColor;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function applyCanvasOnboardingPreference() {
+  if (!el.canvasOnboarding) return;
+  try {
+    el.canvasOnboarding.hidden = localStorage.getItem(CANVAS_ONBOARDING_DISMISSED_KEY) === "true";
+  } catch {
+    el.canvasOnboarding.hidden = false;
+  }
+}
+
+function dismissCanvasOnboarding(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  if (el.canvasOnboarding) el.canvasOnboarding.hidden = true;
+  try {
+    localStorage.setItem(CANVAS_ONBOARDING_DISMISSED_KEY, "true");
+  } catch {
+    // A instrucao ainda fecha quando o navegador bloqueia storage em file://.
+  }
+}
+
+function setCanvasMode(mode) {
+  canvasMode = ["pen", "arrow"].includes(mode) ? mode : "move";
+  el.penMode.classList.toggle("is-active", canvasMode === "pen");
+  el.penMode.setAttribute("aria-pressed", String(canvasMode === "pen"));
+  el.arrowMode.classList.toggle("is-active", canvasMode === "arrow");
+  el.arrowMode.setAttribute("aria-pressed", String(canvasMode === "arrow"));
+  el.boardNotesCarousel.dataset.canvasMode = canvasMode;
+  el.canvasToolStatus.textContent = canvasMode === "pen"
+      ? "Desenhe livremente sobre a mesa."
+      : canvasMode === "arrow"
+        ? "Clique e arraste para criar uma seta."
+      : "Arraste o fundo para navegar. Use o ponto lateral dos cards para conectá-los.";
+  renderBoardNotes();
+}
+
+async function syncCanvasState() {
+  if (!isOnlineMode()) return;
+  try {
+    await saveRemoteBoard(activeBoard, exams, boardNotes, essays, canvasState);
+  } catch {
+    setStatus("Alteração salva neste navegador; a sincronização do caderno falhou.", true);
+  }
+}
+
+function handleDrawingColorClick(event) {
+  const button = event.target.closest("[data-drawing-color]");
+  if (!button) return;
+  drawingColor = button.dataset.drawingColor;
+  updateDrawingColorControls();
+}
+
+function canvasPoint(event) {
+  const rect = el.canvasDrawing.getBoundingClientRect();
+  return { x: Math.round(event.clientX - rect.left), y: Math.round(event.clientY - rect.top) };
+}
+
+function updateLinkPreview(to) {
+  if (!linkGesture) return;
+  const fromNote = boardNotes.find((note) => note.id === linkGesture.from);
+  if (!fromNote) return;
+  const from = noteCenter(fromNote);
+  let preview = el.canvasConnections.querySelector("[data-link-preview]");
+  if (!preview) {
+    el.canvasConnections.insertAdjacentHTML("beforeend", `
+      <g class="canvas-connection canvas-connection--preview" data-link-preview>
+        <path class="canvas-connection__shadow"></path>
+        <path class="canvas-connection__line"></path>
+        <circle class="canvas-connection__start" r="5"></circle>
+        <circle class="canvas-connection__end" r="5"></circle>
+      </g>
+    `);
+    preview = el.canvasConnections.querySelector("[data-link-preview]");
+  }
+  const path = linkCurvePath(from, to);
+  preview.querySelectorAll("path").forEach((item) => item.setAttribute("d", path));
+  preview.querySelector(".canvas-connection__start").setAttribute("cx", from.x);
+  preview.querySelector(".canvas-connection__start").setAttribute("cy", from.y);
+  preview.querySelector(".canvas-connection__end").setAttribute("cx", to.x);
+  preview.querySelector(".canvas-connection__end").setAttribute("cy", to.y);
+}
+
+function startCardLink(event) {
+  const handle = event.target.closest("[data-note-link-handle]");
+  if (!handle || canvasMode !== "move" || event.button !== 0) return;
+  const note = boardNotes.find((item) => item.id === handle.dataset.noteLinkHandle);
+  if (!note) return;
+  linkGesture = {
+    from: note.id,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false,
+    target: null
+  };
+  handle.closest(".canvas-note")?.classList.add("is-link-source");
+  updateLinkPreview(canvasPoint(event));
+  handle.setPointerCapture?.(event.pointerId);
+  el.canvasToolStatus.textContent = "Arraste a conexão até o card de destino.";
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function moveCardLink(event) {
+  if (!linkGesture || event.pointerId !== linkGesture.pointerId) return;
+  if (Math.hypot(event.clientX - linkGesture.startX, event.clientY - linkGesture.startY) > 5) linkGesture.moved = true;
+  el.boardNotesLayer.querySelectorAll(".is-link-target").forEach((card) => card.classList.remove("is-link-target"));
+  const targetElement = document.elementFromPoint(event.clientX, event.clientY)?.closest(".canvas-note");
+  const targetId = targetElement?.dataset.noteId;
+  const validTarget = targetId && targetId !== linkGesture.from;
+  linkGesture.target = validTarget ? targetId : null;
+  if (validTarget) targetElement.classList.add("is-link-target");
+  const targetNote = validTarget ? boardNotes.find((note) => note.id === targetId) : null;
+  updateLinkPreview(targetNote ? noteCenter(targetNote) : canvasPoint(event));
+  event.preventDefault();
+}
+
+function endCardLink(event) {
+  if (!linkGesture || event.pointerId !== linkGesture.pointerId) return;
+  const finished = linkGesture;
+  linkGesture = null;
+  el.boardNotesLayer.querySelectorAll(".is-link-source, .is-link-target").forEach((card) => card.classList.remove("is-link-source", "is-link-target"));
+  el.canvasConnections.querySelector("[data-link-preview]")?.remove();
+  if (!finished.moved || !finished.target) {
+    el.canvasToolStatus.textContent = "Arraste o ponto lateral de um card até outro para conectá-los.";
+    return;
+  }
+  const exists = canvasState.links.some((link) =>
+    (link.from === finished.from && link.to === finished.target) || (link.from === finished.target && link.to === finished.from)
+  );
+  if (!exists) {
+    canvasState.links.push({ id: crypto.randomUUID(), from: finished.from, to: finished.target });
+    persistCanvasState();
+    renderCanvasOverlays();
+    syncCanvasState();
+  }
+  el.canvasToolStatus.textContent = exists ? "Esses cards já estão conectados." : "Cards conectados.";
+}
+
+function startDrawing(event) {
+  if (!["pen", "arrow"].includes(canvasMode) || event.button !== 0) return;
+  const point = canvasPoint(event);
+  if (canvasMode === "arrow") {
+    activeArrow = { id: crypto.randomUUID(), color: drawingColor, from: point, to: point, createdAt: Date.now() };
+    canvasState.arrows.push(activeArrow);
+  } else {
+    activeStroke = {
+      id: crypto.randomUUID(),
+      color: drawingColor,
+      width: event.pointerType === "touch" ? 3 : 2.4,
+      points: [point],
+      createdAt: Date.now()
+    };
+    canvasState.strokes.push(activeStroke);
+  }
+  el.canvasDrawing.setPointerCapture?.(event.pointerId);
+  renderCanvasOverlays();
+  event.preventDefault();
+}
+
+function moveDrawing(event) {
+  const point = canvasPoint(event);
+  if (activeArrow && canvasMode === "arrow") {
+    activeArrow.to = point;
+    renderCanvasOverlays();
+    event.preventDefault();
+    return;
+  }
+  if (!activeStroke || canvasMode !== "pen") return;
+  const last = activeStroke.points.at(-1);
+  if (Math.hypot(point.x - last.x, point.y - last.y) < 2) return;
+  activeStroke.points.push(point);
+  renderCanvasOverlays();
+  event.preventDefault();
+}
+
+function endDrawing() {
+  if (!activeStroke && !activeArrow) return;
+  if (activeStroke && activeStroke.points.length < 2) canvasState.strokes = canvasState.strokes.filter((stroke) => stroke.id !== activeStroke.id);
+  if (activeArrow && Math.hypot(activeArrow.to.x - activeArrow.from.x, activeArrow.to.y - activeArrow.from.y) < 12) {
+    canvasState.arrows = canvasState.arrows.filter((arrow) => arrow.id !== activeArrow.id);
+  }
+  activeStroke = null;
+  activeArrow = null;
+  persistCanvasState();
+  renderCanvasOverlays();
+  syncCanvasState();
+}
+
+function undoDrawing() {
+  const lastStroke = canvasState.strokes.at(-1);
+  const lastArrow = canvasState.arrows.at(-1);
+  if (!lastStroke && !lastArrow) return;
+  if ((lastArrow?.createdAt || 0) > (lastStroke?.createdAt || 0)) canvasState.arrows.pop();
+  else canvasState.strokes.pop();
+  persistCanvasState();
+  renderCanvasOverlays();
+  syncCanvasState();
+}
+
+function clearDrawing() {
+  if (!canvasState.strokes.length) return;
+  canvasState.strokes = [];
+  persistCanvasState();
+  renderCanvasOverlays();
+  syncCanvasState();
+  el.canvasToolStatus.textContent = "Traços de caneta removidos. Setas e conexões foram preservadas.";
 }
 
 function renderSecondaryTotal(exam) {
@@ -1332,11 +2014,15 @@ async function switchBoard(boardId) {
   const nextBoard = boardById(boardId);
   if (!nextBoard || nextBoard.id === activeBoard.id) return;
   activeBoard = nextBoard;
+  if (!activeBoard.notebookOnly) lastAcademicBoard = activeBoard;
   exams = loadExams(activeBoard);
   boardNotes = loadBoardNotes(activeBoard);
-  if (el.boardNoteText) el.boardNoteText.value = "";
+  essays = loadEssays(activeBoard);
+  canvasState = loadCanvasState(activeBoard);
+  customizingNoteId = null;
+  setCanvasMode("move");
   localStorage.setItem(ACTIVE_BOARD_KEY, activeBoard.id);
-  resetForm();
+  if (!activeBoard.notebookOnly) resetForm();
   render();
   if (isOnlineMode()) await syncBoardData(activeBoard, { silent: true });
   updateStatusForBoard();
@@ -1344,18 +2030,25 @@ async function switchBoard(boardId) {
 
 function render() {
   updateBoardTabs();
+  renderBoardNotes();
+  if (activeBoard.notebookOnly) {
+    el.enemSubjectChartCard.hidden = true;
+    return;
+  }
   updateMapModeToggle();
   updateFormForBoard();
   renderTargets();
+  renderEnemSubjectChart();
   drawCharts(true);
   renderExamCarousel();
-  renderBoardNotes();
+  renderEssays();
   renderTable();
 }
 
 function drawCharts(force = false) {
   const charts = [
-    [el.progressChart, drawProgressChart]
+    [el.progressChart, drawProgressChart],
+    ...(activeBoard.id === "enem" ? [[el.enemSubjectChart, drawEnemSubjectChart]] : [])
   ];
 
   charts.forEach(([canvas, draw]) => {
@@ -1375,58 +2068,230 @@ function scheduleChartResize() {
   });
 }
 
-async function saveBoardNote() {
-  const text = el.boardNoteText?.value.trim();
-  if (!text) {
-    setStatus("Escreva uma observacao antes de salvar.", true);
-    return;
-  }
-
-  boardNotes = [
-    {
-      id: crypto.randomUUID(),
-      text,
-      createdAt: new Date().toISOString(),
-      x: 32 + (boardNotes.length % 3) * 278,
-      y: 32 + Math.floor(boardNotes.length / 3) * 190
-    },
-    ...boardNotes
-  ];
-  persistBoardNotes();
-  if (isOnlineMode()) {
-    try {
-      await saveRemoteBoard(activeBoard, exams, boardNotes);
-    } catch (error) {
-      setStatus(`Observacao salva localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
-    }
-  }
-  el.boardNoteText.value = "";
+function createBoardNoteAt(clientX, clientY) {
+  if (canvasMode !== "move") return;
+  const rect = el.boardNotesCarousel.getBoundingClientRect();
+  const width = 280;
+  const height = 190;
+  const x = Math.max(16, Math.min(el.boardNotesCarousel.clientWidth - width - 16, clientX - rect.left - width / 2));
+  const y = Math.max(16, Math.min(el.boardNotesCarousel.clientHeight - height - 16, clientY - rect.top - 28));
+  const note = {
+    id: crypto.randomUUID(),
+    text: "",
+    createdAt: new Date().toISOString(),
+    x: Math.round(x),
+    y: Math.round(y),
+    color: "neutral",
+    fontSize: 16,
+    bold: false,
+    underline: false,
+    width,
+    height,
+    isChecklist: false,
+    checklistState: []
+  };
+  boardNotes = [note, ...boardNotes];
+  customizingNoteId = note.id;
+  animatedNoteId = note.id;
   renderBoardNotes();
-  setStatus(isOnlineMode() ? `${activeBoard.label}: observacao salva e sincronizada` : `${activeBoard.label}: observacao salva neste navegador`);
+  focusNoteEditor(note.id);
+  el.canvasToolStatus.textContent = "Card criado. Escreva diretamente e use o lápis para personalizar.";
 }
 
-function clearBoardNote() {
-  if (el.boardNoteText) el.boardNoteText.value = "";
+function handleCanvasDoubleClick(event) {
+  if (event.target.closest(".canvas-note") || canvasMode !== "move") return;
+  createBoardNoteAt(event.clientX, event.clientY);
+  event.preventDefault();
+}
+
+function focusNoteEditor(noteId, checklistIndex = null) {
+  requestAnimationFrame(() => {
+    const selector = checklistIndex === null
+      ? `[data-note-editor="${CSS.escape(noteId)}"]`
+      : `[data-note-check-editor="${CSS.escape(noteId)}"][data-check-index="${checklistIndex}"]`;
+    const editor = el.boardNotesLayer.querySelector(selector);
+    if (!editor) return;
+    editor.focus();
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+}
+
+function scheduleNoteSync(noteId = null) {
+  clearTimeout(noteSyncTimer);
+  const boardId = activeBoard.id;
+  noteSyncTimer = setTimeout(async () => {
+    if (!isOnlineMode() || activeBoard.id !== boardId) return;
+    try {
+      const note = noteId ? boardNotes.find((item) => item.id === noteId) : null;
+      if (noteId && (!note || !String(note.text || "").trim())) {
+        await deleteRemoteNote(noteId);
+        return;
+      }
+      await saveRemoteBoard(activeBoard, exams, boardNotes, essays, canvasState);
+    } catch {
+      setStatus("Edição salva neste navegador; a sincronização do card falhou.", true);
+    }
+  }, 650);
+}
+
+function handleNoteEditorInput(event) {
+  const editor = event.target.closest("[data-note-editor], [data-note-check-editor]");
+  if (!editor) return;
+  const noteId = editor.dataset.noteEditor || editor.dataset.noteCheckEditor;
+  const note = boardNotes.find((item) => item.id === noteId);
+  if (!note) return;
+  if (editor.dataset.noteEditor) {
+    note.text = editor.innerText.replace(/\n{3,}/g, "\n\n");
+  } else {
+    const card = editor.closest(".canvas-note");
+    note.text = [...card.querySelectorAll("[data-note-check-editor]")].map((item) => item.innerText).join("\n");
+  }
+  persistBoardNotes();
+  scheduleNoteSync(note.id);
+}
+
+function handleNoteEditorKeydown(event) {
+  const editor = event.target.closest("[data-note-check-editor]");
+  if (!editor || event.key !== "Enter") return;
+  event.preventDefault();
+  const note = boardNotes.find((item) => item.id === editor.dataset.noteCheckEditor);
+  const index = Number(editor.dataset.checkIndex);
+  if (!note || !Number.isInteger(index)) return;
+  const items = checklistItems(note);
+  items[index] = editor.innerText;
+  items.splice(index + 1, 0, "");
+  note.checklistState.splice(index + 1, 0, false);
+  note.text = items.join("\n");
+  persistBoardNotes();
+  renderBoardNotes();
+  focusNoteEditor(note.id, index + 1);
+}
+
+function updateNoteAppearance(note, control, value) {
+  if (control === "color" && ["neutral", "red", "blue", "green", "paper"].includes(value)) note.color = value;
+  if (control === "font") note.fontSize = Math.max(10, Math.min(48, Number(value) || 16));
+  if (control === "bold") note.bold = !note.bold;
+  if (control === "underline") note.underline = !note.underline;
+  if (control === "checklist") {
+    note.isChecklist = !note.isChecklist;
+    note.checklistState = checklistItems(note).map((_, index) => Boolean(note.checklistState[index]));
+    note.height = Math.max(note.height || 190, 210);
+  }
+  persistBoardNotes();
+  renderBoardNotes();
+  focusNoteEditor(note.id, note.isChecklist ? 0 : null);
+  scheduleNoteSync(note.id);
+}
+
+function handleNoteControlClick(event) {
+  const control = event.target.closest("[data-note-control]");
+  if (!control || control.dataset.noteControl === "font") return;
+  const note = boardNotes.find((item) => item.id === control.dataset.id);
+  if (!note) return;
+  updateNoteAppearance(note, control.dataset.noteControl, control.dataset.value);
+}
+
+function handleNoteControlInput(event) {
+  const control = event.target.closest("[data-note-control='font']");
+  if (!control) return;
+  const note = boardNotes.find((item) => item.id === control.dataset.id);
+  if (!note) return;
+  note.fontSize = Math.max(10, Math.min(48, Number(control.value) || 16));
+  control.nextElementSibling.textContent = `${note.fontSize} px`;
+  control.closest(".canvas-note").style.setProperty("--note-font-size", `${note.fontSize}px`);
+  persistBoardNotes();
+  scheduleNoteSync(note.id);
 }
 
 async function handleBoardNotesClick(event) {
-  const button = event.target.closest("button[data-note-action]");
-  if (!button || button.dataset.noteAction !== "delete") return;
-  boardNotes = boardNotes.filter((note) => note.id !== button.dataset.id);
+  const control = event.target.closest("[data-note-action]");
+  if (!control) return;
+  const noteId = control.dataset.id;
+  if (control.dataset.noteAction === "customize") {
+    customizingNoteId = customizingNoteId === noteId ? null : noteId;
+    renderBoardNotes();
+    if (customizingNoteId) focusNoteEditor(noteId);
+    return;
+  }
+  if (control.dataset.noteAction === "check") {
+    const note = boardNotes.find((item) => item.id === noteId);
+    const index = Number(control.dataset.checkIndex);
+    if (!note || !Number.isInteger(index)) return;
+    note.checklistState[index] = control.checked;
+    control.closest(".canvas-check-item")?.classList.toggle("is-checked", control.checked);
+    persistBoardNotes();
+    syncCanvasState();
+    return;
+  }
+  if (control.dataset.noteAction !== "delete") return;
+  if (customizingNoteId === noteId) customizingNoteId = null;
+  boardNotes = boardNotes.filter((note) => note.id !== noteId);
+  canvasState.links = canvasState.links.filter((link) => link.from !== noteId && link.to !== noteId);
   persistBoardNotes();
+  persistCanvasState();
+  renderBoardNotes();
   if (isOnlineMode()) {
     try {
-      await deleteRemoteNote(button.dataset.id);
+      await Promise.all([deleteRemoteNote(noteId), syncCanvasState()]);
     } catch (error) {
       setStatus(`Observacao excluida localmente. Falha no sync: ${error.message || "verifique o Supabase"}`, true);
+      return;
     }
   }
-  renderBoardNotes();
   setStatus(`${activeBoard.label}: observacao excluida deste navegador`);
 }
 
+function startCanvasPan(event) {
+  if (
+    canvasMode !== "move"
+    || event.button !== 0
+    || event.target.closest(".canvas-note, .canvas-onboarding, button, input, textarea, select, label")
+  ) return;
+  canvasPan = {
+    pointerId: event.pointerId,
+    pointerType: event.pointerType,
+    startX: event.clientX,
+    startY: event.clientY,
+    scrollLeft: el.notebookCanvasWrap.scrollLeft,
+    scrollTop: el.notebookCanvasWrap.scrollTop,
+    moved: false
+  };
+  el.notebookCanvasWrap.classList.add("is-panning");
+  el.notebookCanvasWrap.setPointerCapture?.(event.pointerId);
+}
+
+function moveCanvasPan(event) {
+  if (!canvasPan || event.pointerId !== canvasPan.pointerId) return;
+  const dx = event.clientX - canvasPan.startX;
+  const dy = event.clientY - canvasPan.startY;
+  if (Math.hypot(dx, dy) > 6) canvasPan.moved = true;
+  el.notebookCanvasWrap.scrollLeft = canvasPan.scrollLeft - dx;
+  el.notebookCanvasWrap.scrollTop = canvasPan.scrollTop - dy;
+  event.preventDefault();
+}
+
+function endCanvasPan(event) {
+  if (!canvasPan || event.pointerId !== canvasPan.pointerId) return;
+  const finished = canvasPan;
+  canvasPan = null;
+  el.notebookCanvasWrap.classList.remove("is-panning");
+  if (finished.moved || finished.pointerType !== "touch") return;
+  const now = Date.now();
+  if (lastCanvasTap && now - lastCanvasTap.time < 380 && Math.hypot(event.clientX - lastCanvasTap.x, event.clientY - lastCanvasTap.y) < 28) {
+    createBoardNoteAt(event.clientX, event.clientY);
+    lastCanvasTap = null;
+  } else {
+    lastCanvasTap = { time: now, x: event.clientX, y: event.clientY };
+  }
+}
+
 function startNoteDrag(event) {
-  if (event.button !== 0 || event.target.closest("button")) return;
+  if (canvasMode !== "move" || event.button !== 0 || event.target.closest("button")) return;
   const handle = event.target.closest("[data-note-drag]");
   if (!handle) return;
   const noteElement = handle.closest(".canvas-note");
@@ -1455,6 +2320,12 @@ function moveNoteDrag(event) {
   const y = Math.max(16, Math.min(maxY, noteDrag.originY + event.clientY - noteDrag.startY));
   noteDrag.element.style.setProperty("--note-x", `${Math.round(x)}px`);
   noteDrag.element.style.setProperty("--note-y", `${Math.round(y)}px`);
+  const draggedNote = boardNotes.find((item) => item.id === noteDrag.id);
+  if (draggedNote) {
+    draggedNote.x = Math.round(x);
+    draggedNote.y = Math.round(y);
+    renderCanvasOverlays();
+  }
   noteDrag.x = x;
   noteDrag.y = y;
   event.preventDefault();
@@ -1476,6 +2347,63 @@ async function endNoteDrag(event) {
       await saveRemoteBoard(activeBoard, exams, boardNotes);
     } catch {
       setStatus("Posição salva neste navegador; a sincronização falhou.", true);
+    }
+  }
+}
+
+function startNoteResize(event) {
+  if (["pen", "arrow"].includes(canvasMode) || event.button !== 0) return;
+  const handle = event.target.closest("[data-note-resize]");
+  if (!handle) return;
+  const note = boardNotes.find((item) => item.id === handle.dataset.noteResize);
+  const element = handle.closest(".canvas-note");
+  if (!note || !element) return;
+  noteResize = {
+    id: note.id,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    width: note.width || element.offsetWidth,
+    height: note.height || element.offsetHeight,
+    fontSize: note.fontSize || 16,
+    element
+  };
+  element.classList.add("is-resizing");
+  handle.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function moveNoteResize(event) {
+  if (!noteResize || event.pointerId !== noteResize.pointerId) return;
+  const note = boardNotes.find((item) => item.id === noteResize.id);
+  if (!note) return;
+  const maxWidth = Math.min(560, el.boardNotesCarousel.clientWidth - (note.x || 32) - 16);
+  const maxHeight = Math.min(560, el.boardNotesCarousel.clientHeight - (note.y || 32) - 16);
+  const width = Math.max(200, Math.min(maxWidth, noteResize.width + event.clientX - noteResize.startX));
+  const height = Math.max(140, Math.min(maxHeight, noteResize.height + event.clientY - noteResize.startY));
+  const scale = ((width / noteResize.width) + (height / noteResize.height)) / 2;
+  const fontSize = Math.max(10, Math.min(48, noteResize.fontSize * scale));
+  note.width = Math.round(width);
+  note.height = Math.round(height);
+  note.fontSize = Math.round(fontSize);
+  noteResize.element.style.setProperty("--note-width", `${note.width}px`);
+  noteResize.element.style.setProperty("--note-height", `${note.height}px`);
+  noteResize.element.style.setProperty("--note-font-size", `${note.fontSize}px`);
+  renderCanvasOverlays();
+  event.preventDefault();
+}
+
+async function endNoteResize(event) {
+  if (!noteResize || event.pointerId !== noteResize.pointerId) return;
+  const finished = noteResize;
+  noteResize = null;
+  finished.element.classList.remove("is-resizing");
+  persistBoardNotes();
+  if (isOnlineMode()) {
+    try {
+      await saveRemoteBoard(activeBoard, exams, boardNotes, essays, canvasState);
+    } catch {
+      setStatus("Tamanho salvo neste navegador; a sincronização falhou.", true);
     }
   }
 }
@@ -1563,13 +2491,41 @@ el.activateSync.addEventListener("click", handleActivateSync);
 el.authClose.addEventListener("click", closeAuthModal);
 el.authCloseBackdrop.addEventListener("click", closeAuthModal);
 el.goalForm.addEventListener("submit", saveGoal);
-el.saveBoardNote.addEventListener("click", saveBoardNote);
-el.clearBoardNote.addEventListener("click", clearBoardNote);
+el.essayForm.addEventListener("submit", saveEssay);
+el.essayList.addEventListener("click", handleEssayClick);
 el.boardNotesCarousel.addEventListener("click", handleBoardNotesClick);
+el.boardNotesCarousel.addEventListener("click", handleNoteControlClick);
+el.boardNotesCarousel.addEventListener("input", handleNoteEditorInput);
+el.boardNotesCarousel.addEventListener("input", handleNoteControlInput);
+el.boardNotesCarousel.addEventListener("keydown", handleNoteEditorKeydown);
+el.boardNotesCarousel.addEventListener("pointerdown", startCardLink);
+el.boardNotesCarousel.addEventListener("pointerdown", startNoteResize);
 el.boardNotesCarousel.addEventListener("pointerdown", startNoteDrag);
+el.notebookCanvasWrap.addEventListener("pointerdown", startCanvasPan);
+el.notebookCanvasWrap.addEventListener("pointermove", moveCanvasPan, { passive: false });
+el.notebookCanvasWrap.addEventListener("pointerup", endCanvasPan);
+el.notebookCanvasWrap.addEventListener("pointercancel", endCanvasPan);
+el.notebookCanvasWrap.addEventListener("dblclick", handleCanvasDoubleClick);
+el.penMode.addEventListener("click", () => setCanvasMode(canvasMode === "pen" ? "move" : "pen"));
+el.arrowMode.addEventListener("click", () => setCanvasMode(canvasMode === "arrow" ? "move" : "arrow"));
+el.drawingColorOptions.addEventListener("click", handleDrawingColorClick);
+el.undoDrawing.addEventListener("click", undoDrawing);
+el.clearDrawing.addEventListener("click", clearDrawing);
+el.canvasDrawing.addEventListener("pointerdown", startDrawing);
+el.canvasDrawing.addEventListener("pointermove", moveDrawing);
+el.canvasDrawing.addEventListener("pointerup", endDrawing);
+el.canvasDrawing.addEventListener("pointercancel", endDrawing);
 document.addEventListener("pointermove", moveNoteDrag, { passive: false });
+document.addEventListener("pointermove", moveNoteResize, { passive: false });
+document.addEventListener("pointermove", moveCardLink, { passive: false });
 document.addEventListener("pointerup", endNoteDrag);
 document.addEventListener("pointercancel", endNoteDrag);
+document.addEventListener("pointerup", endNoteResize);
+document.addEventListener("pointercancel", endNoteResize);
+document.addEventListener("pointerup", endCardLink);
+document.addEventListener("pointercancel", endCardLink);
+el.canvasOnboardingDismiss?.addEventListener("pointerdown", (event) => event.stopPropagation());
+el.canvasOnboardingDismiss?.addEventListener("click", dismissCanvasOnboarding);
 
 el.viewButtons.forEach((button) => {
   button.addEventListener("click", () => switchView(button.dataset.viewTarget));
@@ -1579,13 +2535,19 @@ el.boardTabs.forEach((tab) => {
   tab.addEventListener("click", () => switchBoard(tab.dataset.board));
 });
 
-window.addEventListener("resize", scheduleChartResize, { passive: true });
+window.addEventListener("resize", () => {
+  scheduleChartResize();
+  renderCanvasOverlays();
+}, { passive: true });
 window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !el.authPanel.hidden) closeAuthModal();
 });
 
 applyTheme(activeTheme);
-switchView("home");
+updateDrawingColorControls();
+applyCanvasOnboardingPreference();
+const initialView = location.hash === "#registros" ? "records" : location.hash === "#caderno" ? "notebook" : "home";
+switchView(initialView, { updateHash: false });
 render();
 updateFormTotal();
 updateStatusForBoard();
